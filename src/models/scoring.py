@@ -4,6 +4,7 @@ from sqlalchemy import String, Integer, Float, JSON, Text, DateTime, ForeignKey,
 from sqlalchemy.sql import func
 from typing import Optional
 from src.models.candidates import Candidates
+from src.models.vacancies import Vacancies
 
 
 class Scoring(Base):
@@ -46,5 +47,11 @@ class Scoring(Base):
     )
     candidate: Mapped["Candidates"] = relationship(
         "Candidates",
-        back_populates="scores"
+        back_populates="scorings",
+        lazy='selectin'
+    )
+    vacancy: Mapped["Vacancies"] = relationship(
+        "Vacancies",
+        back_populates="scorings",
+        lazy="selectin"
     )
