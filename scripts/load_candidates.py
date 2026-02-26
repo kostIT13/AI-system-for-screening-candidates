@@ -1,10 +1,11 @@
 import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+
 from src.core.database import get_db
 from src.services.candidates.parser import load_candidates_from_csv
 
-
-sys.path.append(str(Path(__file__).parent.parent))
 
 def main():
     db = next(get_db())
