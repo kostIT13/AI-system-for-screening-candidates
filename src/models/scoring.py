@@ -8,7 +8,6 @@ from src.models.vacancies import Vacancies
 
 
 class Scoring(Base):
-    
     __tablename__ = "scoring"
     
     id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True)
