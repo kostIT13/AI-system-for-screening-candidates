@@ -8,9 +8,8 @@ from src.models.scoring import Scoring
 
 
 class Candidates(Base):
-    """Модель кандидата (резюме) — соответствует структуре датасета."""
-    
     __tablename__ = "candidates"
+
     id: Mapped[str] = mapped_column(String(36), primary_key=True, index=True, comment="UUID кандидата")
     gender: Mapped[Optional[str]] = mapped_column(String(20), comment="Пол: male/female")
     age: Mapped[Optional[int]] = mapped_column(Integer, comment="Возраст в годах")
