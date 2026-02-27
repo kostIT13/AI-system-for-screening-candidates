@@ -14,4 +14,16 @@ secret.txt
 temp/
 [cr]at.exe
 
+
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+.git/
+.gitignore
 .env
+*.log
+.DS_Store
+data/*.csv
+alembic/versions/__pycache__/
