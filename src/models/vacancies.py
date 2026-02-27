@@ -1,10 +1,12 @@
 from src.core.database import Base 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 from sqlalchemy import Integer, String, JSON
 from sqlalchemy.sql import func 
 from datetime import datetime
-from src.models.scoring import Scoring
+
+if TYPE_CHECKING:
+    from src.models.scoring import Scoring
 
 class Vacancies(Base):
     __tablename__ = 'vacancies'

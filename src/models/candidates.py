@@ -2,9 +2,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.core.database import Base
 from sqlalchemy import String, Integer, JSON
 from sqlalchemy.sql import func
-from typing import List, Optional
-from src.models.scoring import Scoring
+from typing import List, Optional, TYPE_CHECKING
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from src.models.scoring import Scoring
+
 
 
 class Candidates(Base):
