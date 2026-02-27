@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, Query, HTTPException, UploadFile, File
 from typing import List, Optional
 from src.api.candidates.schemas import CandidateResponse, CandidateCreate, CandidateUpdate, CandidateStats
-from src.api.candidates.dependencies import get_candidate_service
+from src.api.candidates.dependencies import get_candidate_service, CandidatesServiceDependency
 from src.services.candidates.candidate_service import CandidateService
 from src.core.database import get_db
 import csv 
@@ -16,11 +16,11 @@ router = APIRouter(prefix="/api/v1/candidates", tags=["Candidates"])
 
 @router.get('/', response_model=List[CandidateResponse])
 async def get_candidates(
+    service: CandidatesServiceDependency,
     skip: int = Query(0, ge=0, description="Пропустить N записей"),
     limit: int = Query(100, ge=1, le=1000, description="Лимит записей"),
     category: Optional[str] = Query(None, description="Фильтр по категории"),
     location: Optional[str] = Query(None, description="Фильтр по локации"),
-    service: CandidateService = Depends(get_candidate_service)
 ):
     filters = {}
     if category:
@@ -30,25 +30,25 @@ async def get_candidates(
     return await service.get_candidates(skip=skip, limit=limit, **filters)
 
 @router.get('/{candidate_id}', response_model=CandidateResponse)
-async def get_candidate(candidate_id: str, service: CandidateService = Depends(get_candidate_service)):
+async def get_candidate(candidate_id: str, service: CandidatesServiceDependency):
     candidate = await service.get_candidate(candidate_id)
     if not candidate:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return candidate
 
 @router.post('/', response_model=CandidateResponse, status_code=status.HTTP_201_CREATED)
-async def create_candidate(candidate: CandidateCreate, service: CandidateService = Depends(get_candidate_service)):
+async def create_candidate(candidate: CandidateCreate, service: CandidatesServiceDependency):
     return await service.create_candidate(candidate.model_dump())
 
 @router.put('/{candidate_id}', response_model=CandidateResponse)
-async def update_candidate(candidate_id: str, candidate_update: CandidateUpdate, service: CandidateService = Depends(get_candidate_service)):
+async def update_candidate(candidate_id: str, candidate_update: CandidateUpdate, service: CandidatesServiceDependency):
     updated = await service.update_candidate(candidate_id, candidate_update.model_dump(exclude_unset=True))
     if not updated:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return updated
 
 @router.delete('/{candidate_id}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_candidate(candidate_id: str, service: CandidateService = Depends(get_candidate_service)):
+async def delete_candidate(candidate_id: str, service: CandidatesServiceDependency):
     deleted = await service.delete_candidate(candidate_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -94,7 +94,7 @@ async def upload_candidates_csv(
 
 @router.get("/stats", response_model=CandidateStats)
 async def get_candidates_stats(
-    service: CandidateService = Depends(get_candidate_service)
+    service: CandidatesServiceDependency
 ):
     all_candidates = await service.get_candidates(limit=10000)
     
@@ -129,11 +129,11 @@ async def get_candidates_stats(
     )
 
 @router.get('/search/by-skill/{skill}', response_model=List[CandidateResponse])
-async def get_by_skills(skill: str, service: CandidateService = Depends(get_candidate_service)):
+async def get_by_skills(skill: str, service: CandidatesServiceDependency):
     return await service.get_candidates_by_skill(skill)
 
 @router.get('/search/by-category/{category}', response_model=List[CandidateResponse])
-async def get_by_category(category: str, service: CandidateService = Depends(get_candidate_service)):
+async def get_by_category(category: str, service: CandidatesServiceDependency):
     return await service.get_candidates_by_category(category)
 
 
