@@ -8,8 +8,7 @@ from datetime import datetime
 if TYPE_CHECKING:
     from src.models.scoring import Scoring
 
-
-
+    
 class Candidates(Base):
     __tablename__ = "candidates"
 

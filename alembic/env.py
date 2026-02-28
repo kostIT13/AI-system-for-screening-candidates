@@ -4,10 +4,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
-
 from src.core.database import Base
 from src.models.candidates import Candidates 
-from src.models.vacancies import Vacancies   
+from src.models.vacancies import Vacancies  
 from src.models.scoring import Scoring       
 
 config = context.config
@@ -18,21 +17,15 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def get_url():
-    from src.core.config import settings
-    return settings.database_url
-
-
 def run_migrations_offline() -> None:
-    url = get_url()
+    from src.core.config import DATABASE_URL  
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
@@ -43,12 +36,14 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_async_migrations() -> None:
+    from src.core.config import DATABASE_URL 
+    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+    
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -57,7 +52,6 @@ async def run_async_migrations() -> None:
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
-
     await connectable.dispose()
 
 
