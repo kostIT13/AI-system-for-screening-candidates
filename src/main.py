@@ -5,6 +5,8 @@ from src.core.logging_settings import setup_logging
 from contextlib import asynccontextmanager
 from src.core.database import engine
 from src.api.candidates.endpoints import router as candidates_router
+from src.api.vacancies.endpoints import router as vacancies_router
+
 
 setup_logging(level=os.getenv("LOG_LEVEL", "INFO"))
 
@@ -31,3 +33,5 @@ async def lifespan(app: FastAPI):
 
 
 app.include_router(router=candidates_router)
+app.include_router(router=vacancies_router)
+
