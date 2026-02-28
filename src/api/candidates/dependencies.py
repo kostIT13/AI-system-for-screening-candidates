@@ -6,7 +6,7 @@ from fastapi import Depends
 
 
 
-async def get_candidate_service(db: AsyncSession = get_db) -> CandidateService:
+async def get_candidate_service(db: AsyncSession = Depends(get_db)) -> CandidateService:
     return CandidateService(db)
 
 CandidatesServiceDependency = Annotated[CandidateService, Depends(get_candidate_service)]

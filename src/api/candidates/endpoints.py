@@ -1,15 +1,10 @@
-from fastapi import APIRouter, Depends, status, Query, HTTPException, UploadFile, File
-from typing import List, Optional
+from fastapi import APIRouter, status, Query, HTTPException, UploadFile, File
+from typing import List, Optional, Annotated
 from src.api.candidates.schemas import CandidateResponse, CandidateCreate, CandidateUpdate, CandidateStats
-from src.api.candidates.dependencies import get_candidate_service, CandidatesServiceDependency
+from src.api.candidates.dependencies import CandidatesServiceDependency
 from src.services.candidates.candidate_service import CandidateService
-from src.core.database import get_db
 import csv 
 import io 
-import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.candidates import Candidates
-from src.services.candidates.parser import parse_skills
 
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["Candidates"])
@@ -55,8 +50,8 @@ async def delete_candidate(candidate_id: str, service: CandidatesServiceDependen
     
 @router.post("/upload-csv")
 async def upload_candidates_csv(
-    file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
+    service: CandidatesServiceDependency,
+    file: UploadFile = File(...)
 ):
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files allowed")
@@ -70,27 +65,23 @@ async def upload_candidates_csv(
         for row in reader:
             candidate_data = {
                 'category': row.get('Category', ''),
-                'title': row.get('Title', ''),
+                'title': row.get('Title', row.get('Category', '')),
                 'exp_years': int(row['Exp_Years']) if row.get('Exp_Years') else None,
-                'key_skills': parse_skills(row.get('Key_Skills', '')),
-                'location': row.get('Location', ''),
+                'key_skills': [s.strip() for s in row.get('Key_Skills', '').split(',') if s.strip()] if row.get('Key_Skills') else None,
+                'location': row.get('Location', 'Not specified'),
                 'salary_min': int(row['Salary_Min']) if row.get('Salary_Min') else None,
                 'salary_max': int(row['Salary_Max']) if row.get('Salary_Max') else None,
                 'employment': row.get('Employment', ''),
                 'remote': row.get('Remote', ''),
                 'summary': row.get('Summary', '')[:500] if row.get('Summary') else None
             }
-            
-            candidate = Candidates(id=str(uuid.uuid4()), **candidate_data)
-            db.add(candidate)
+            await service.create_candidate(candidate_data)
             count += 1
         
-        await db.commit()
         return {"message": f"Загружено {count} кандидатов", "count": count}
     
     except Exception as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
 
 @router.get("/stats", response_model=CandidateStats)
 async def get_candidates_stats(
