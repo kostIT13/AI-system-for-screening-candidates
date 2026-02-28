@@ -13,6 +13,14 @@ class ScoringRepository(ABC):
         raise NotImplementedError
     
     @abstractmethod
+    async def get_by_candidate_id(self, candidate_id: str) -> List[Scoring]:
+        return NotImplementedError
+    
+    @abstractmethod
+    async def get_vacancy_by_id(self, category: str) -> List[Scoring]:
+        return NotImplementedError
+    
+    @abstractmethod
     async def create(self, data: Scoring) -> Optional[Scoring]:
         raise NotImplementedError
     
@@ -24,10 +32,3 @@ class ScoringRepository(ABC):
     async def delete(self, scoring_id: str) -> bool:
         raise NotImplementedError
     
-    @abstractmethod
-    async def get_candidate_by_id(self, candidate_id: str) -> List[Scoring]:
-        return NotImplementedError
-    
-    @abstractmethod
-    async def get_candidate_by_category(self, category: str) -> List[Scoring]:
-        return NotImplementedError
