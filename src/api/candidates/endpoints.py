@@ -28,7 +28,7 @@ async def get_candidates(
 async def get_candidate(candidate_id: str, service: CandidatesServiceDependency):
     candidate = await service.get_candidate(candidate_id)
     if not candidate:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
     return candidate
 
 @router.post('/', response_model=CandidateResponse, status_code=status.HTTP_201_CREATED)
@@ -120,11 +120,10 @@ async def get_candidates_stats(
     )
 
 @router.get('/search/by-skill/{skill}', response_model=List[CandidateResponse])
-async def get_by_skills(skill: str, service: CandidatesServiceDependency):
+async def get_by_skill(skill: str, service: CandidatesServiceDependency):
     return await service.get_candidates_by_skill(skill)
 
 @router.get('/search/by-category/{category}', response_model=List[CandidateResponse])
 async def get_by_category(category: str, service: CandidatesServiceDependency):
     return await service.get_candidates_by_category(category)
-
 

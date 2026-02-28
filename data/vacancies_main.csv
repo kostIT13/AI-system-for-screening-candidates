@@ -1,4 +1,4 @@
-Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Description
+Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary
 Фронтенд-разработчик,Frontend Developer,3-5,"React, Vue, Angular, HTML/CSS, JavaScript, Redux",Москва,80000,150000,Полная,Да,"Разработка пользовательских интерфейсов для веб-приложений. Работа с современными фронтенд-фреймворками."
 Фронтенд-разработчик,Senior Frontend Developer,5-7,"React, TypeScript, Webpack, CSS-in-JS, GraphQL",Санкт-Петербург,120000,200000,Полная,Гибрид,"Ведущий разработчик фронтенда. Архитектура SPA, оптимизация производительности."
 Фронтенд-разработчик,Frontend Developer (Vue),3-5,"Vue.js, Vuex, Nuxt, JavaScript, HTML5, CSS3",Москва,90000,160000,Полная,Да,"Разработка на Vue.js. Создание адаптивных интерфейсов, работа с API."

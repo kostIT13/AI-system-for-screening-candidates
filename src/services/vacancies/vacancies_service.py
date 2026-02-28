@@ -51,3 +51,6 @@ class VacancyService:
 
     async def get_vacancies_by_skill(self, skill: str) -> List[Vacancies]:
         return await self.repository.get_all(key_skills=skill)
+    
+    async def get_vacancies_by_category(self, category: str) -> List[Vacancies]:
+        return await self.repository.get_all(category=category)
