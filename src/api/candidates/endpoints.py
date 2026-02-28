@@ -9,6 +9,7 @@ import io
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["Candidates"])
 
+
 @router.get('/', response_model=List[CandidateResponse])
 async def get_candidates(
     service: CandidatesServiceDependency,
@@ -24,6 +25,7 @@ async def get_candidates(
         filters['location'] = location
     return await service.get_candidates(skip=skip, limit=limit, **filters)
 
+
 @router.get('/{candidate_id}', response_model=CandidateResponse)
 async def get_candidate(candidate_id: str, service: CandidatesServiceDependency):
     candidate = await service.get_candidate(candidate_id)
@@ -31,9 +33,11 @@ async def get_candidate(candidate_id: str, service: CandidatesServiceDependency)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Candidate not found')
     return candidate
 
+
 @router.post('/', response_model=CandidateResponse, status_code=status.HTTP_201_CREATED)
 async def create_candidate(candidate: CandidateCreate, service: CandidatesServiceDependency):
     return await service.create_candidate(candidate.model_dump())
+
 
 @router.put('/{candidate_id}', response_model=CandidateResponse)
 async def update_candidate(candidate_id: str, candidate_update: CandidateUpdate, service: CandidatesServiceDependency):
@@ -42,12 +46,14 @@ async def update_candidate(candidate_id: str, candidate_update: CandidateUpdate,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return updated
 
+
 @router.delete('/{candidate_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_candidate(candidate_id: str, service: CandidatesServiceDependency):
     deleted = await service.delete_candidate(candidate_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     
+
 @router.post("/upload-csv")
 async def upload_candidates_csv(
     service: CandidatesServiceDependency,
@@ -82,6 +88,7 @@ async def upload_candidates_csv(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
+
 
 @router.get("/stats", response_model=CandidateStats)
 async def get_candidates_stats(
@@ -119,9 +126,11 @@ async def get_candidates_stats(
         avg_salary_max=round(avg_salary_max, 2) if avg_salary_max else None
     )
 
+
 @router.get('/search/by-skill/{skill}', response_model=List[CandidateResponse])
 async def get_by_skill(skill: str, service: CandidatesServiceDependency):
     return await service.get_candidates_by_skill(skill)
+
 
 @router.get('/search/by-category/{category}', response_model=List[CandidateResponse])
 async def get_by_category(category: str, service: CandidatesServiceDependency):

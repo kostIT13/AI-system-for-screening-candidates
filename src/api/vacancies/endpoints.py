@@ -5,6 +5,7 @@ from src.api.vacancies.dependencies import VacancyServiceDependency
 import io
 import csv
 
+
 router = APIRouter(prefix="/api/v1/vacancies", tags=["Vacancies"])
 
 
@@ -26,6 +27,7 @@ async def get_vacancies(
         filters['status'] = status
     return await service.get_candidates(skip=skip, limit=limit, **filters)
 
+
 @router.get('/{vacancy_id}', response_model=VacanciesResponse)
 async def get_vacancy(vacancy_id: str, service: VacancyServiceDependency):
     vacancy = await service.get_vacancy(vacancy_id)
@@ -33,9 +35,11 @@ async def get_vacancy(vacancy_id: str, service: VacancyServiceDependency):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
     return vacancy
 
+
 @router.post('/', response_model=VacanciesResponse, status_code=status.HTTP_201_CREATED)
 async def create_vacancy(vacancy: VacanciesCreate, service: VacancyServiceDependency):
     return await service.create_vacancy(vacancy.model_dump())
+
 
 @router.put('/{vacancy_id}', response_model=VacanciesResponse)
 async def update_vacancy(vacancy_id: str, vacancy_update: VacanciesUpdate, service: VacancyServiceDependency):
@@ -44,12 +48,14 @@ async def update_vacancy(vacancy_id: str, vacancy_update: VacanciesUpdate, servi
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Vacancy not found')
     return updated
 
+
 @router.delete('/{vacancy_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_vacancy(vacancy_id: str, service: VacancyServiceDependency):
     deleted = await service.delete_vacancy(vacancy_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Vacancy not found')
     
+
 @router.post("/upload-csv")
 async def upload_vacancies_csv(
         service: VacancyServiceDependency,
@@ -121,6 +127,7 @@ async def upload_vacancies_csv(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
     
+
 @router.get("/stats", response_model=VacanciesStats)
 async def get_vacancies_stats(
     service: VacancyServiceDependency
@@ -163,13 +170,16 @@ async def get_vacancies_stats(
         avg_salary_max=round(avg_salary_max, 2) if avg_salary_max else None
     )
 
+
 @router.get('/search/by-skill/{skill}', response_model=List[VacanciesResponse])
 async def get_by_skill(skill: str, service: VacancyServiceDependency):
     return await service.get_vacancies_by_skill(skill)
 
+
 @router.get('/search/by-category/{category}', response_model=List[VacanciesResponse])
 async def get_by_category(category: str, service: VacancyServiceDependency):
     return await service.get_vacancies_by_category(category)
+
 
 @router.put('/{vacancy_id}/close', response_model=VacanciesResponse)
 async def close_vacancy(
