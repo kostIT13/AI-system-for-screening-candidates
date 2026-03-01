@@ -39,3 +39,11 @@ class SQLAlchemyVacanciesRepository(VacanciesRepository):
         await self.session.commit()
         await self.session.refresh(vacancy)
         return vacancy
+    
+    async def delete(self, vacancies_id: str) -> bool:
+        vacancy = await self.get_by_id(vacancies_id)
+        if not vacancy:
+            return False
+        await self.session.delete(vacancy)
+        await self.session.commit()
+        return True

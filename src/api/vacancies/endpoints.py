@@ -62,7 +62,6 @@ async def upload_vacancies_csv(
     file: UploadFile = File(..., description="CSV файл с вакансиями")
 
 ):
-    """Загрузить вакансии из CSV файла"""
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files allowed")
     
