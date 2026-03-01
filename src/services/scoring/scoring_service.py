@@ -2,10 +2,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.services.scoring.repository import SQLAlchemyScoringRepository
 from src.services.candidates.candidate_service import CandidateService
 from src.services.vacancies.vacancies_service import VacancyService
+from src.services.ai.scoring_engine import ScoringEngine
 from src.models.scoring import Scoring
 from typing import List, Optional, Dict
 import uuid
-import json
 
 
 class ScoringService:
@@ -14,13 +14,12 @@ class ScoringService:
         self.repository = SQLAlchemyScoringRepository(db)
         self.candidate_service = CandidateService(db)
         self.vacancy_service = VacancyService(db)
+        self.scoring_engine = ScoringEngine()
 
     async def calculate_match(
         self, 
         candidate_id: str, 
-        vacancy_id: str,
-        llm_response: Optional[str] = None,
-        analysis: Optional[Dict] = None
+        vacancy_id: str
     ) -> Scoring:
         candidate = await self.candidate_service.get_candidate(candidate_id)
         vacancy = await self.vacancy_service.get_vacancy(vacancy_id)
@@ -28,8 +27,9 @@ class ScoringService:
         if not candidate or not vacancy:
             raise ValueError("Candidate or Vacancy not found")
         
-        match_score = analysis.get('match_score', 0) if analysis else 0
-        confidence = analysis.get('confidence', 0.0) if analysis else 0.0
+        match_score, confidence, analysis = await self.scoring_engine.calculate_match(
+            candidate, vacancy
+        )
         
         scoring = Scoring(
             id=str(uuid.uuid4()),
@@ -38,7 +38,7 @@ class ScoringService:
             match_score=match_score,
             confidence=confidence,
             analysis=analysis,
-            llm_raw_response=llm_response
+            llm_raw_response=None
         )
         
         return await self.repository.create(scoring)
@@ -80,33 +80,36 @@ class ScoringService:
         results = []
         
         for vacancy in active_vacancies:
-            analysis = {'match_score': 0, 'confidence': 0.0}
-            
-            scoring = await self.calculate_match(
-                candidate_id=candidate_id,
-                vacancy_id=vacancy.id,
-                analysis=analysis
-            )
-            results.append(scoring)
+            try:
+                scoring = await self.calculate_match(
+                    candidate_id=candidate_id,
+                    vacancy_id=vacancy.id
+                )
+                results.append(scoring)
+            except Exception as e:
+                print(f"Error scoring vacancy {vacancy.id}: {e}")
+                continue
         
         return results
 
     async def batch_score_vacancy(self, vacancy_id: str) -> List[Scoring]:
+        """Массовый скоринг вакансии по всем кандидатам"""
         vacancy = await self.vacancy_service.get_vacancy(vacancy_id)
         if not vacancy:
             raise ValueError("Vacancy not found")
-    
+        
         all_candidates = await self.candidate_service.get_candidates(limit=1000)
         results = []
         
         for candidate in all_candidates:
-            analysis = {'match_score': 0, 'confidence': 0.0}
-            
-            scoring = await self.calculate_match(
-                candidate_id=candidate.id,
-                vacancy_id=vacancy_id,
-                analysis=analysis
-            )
-            results.append(scoring)
+            try:
+                scoring = await self.calculate_match(
+                    candidate_id=candidate.id,
+                    vacancy_id=vacancy_id
+                )
+                results.append(scoring)
+            except Exception as e:
+                print(f"Error scoring candidate {candidate.id}: {e}")
+                continue
         
         return results
