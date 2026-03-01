@@ -6,6 +6,6 @@ from typing import Annotated
 
 
 async def get_scoring_service(db: AsyncSession = Depends(get_db)):
-    return ScoringService(get_scoring_service)
+    return ScoringService(db)
 
 ScoringServiceDependency = Annotated[ScoringService, Depends(get_scoring_service)]
