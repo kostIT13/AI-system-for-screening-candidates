@@ -6,7 +6,7 @@ from typing import Annotated
 
 
 async def get_vacancy_service(db: AsyncSession = Depends(get_db)) -> VacancyService:
-    return VacancyService(get_db)
+    return VacancyService(get_vacancy_service)
 
 
 VacancyServiceDependency = Annotated[VacancyService, Depends(get_vacancy_service)]
