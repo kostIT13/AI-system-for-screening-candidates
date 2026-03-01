@@ -173,7 +173,7 @@ class ScoringEngine:
         if analysis.get('strengths'):
             lines.append(f"Сильные стороны: {', '.join(analysis['strengths'])}")
         if analysis.get('weaknesses'):
-            lines.append(f"⚠️ Слабые стороны: {', '.join(analysis['weaknesses'])}")
+            lines.append(f"Слабые стороны: {', '.join(analysis['weaknesses'])}")
         
         if analysis.get('recommendation'):
             rec = analysis['recommendation'].upper()

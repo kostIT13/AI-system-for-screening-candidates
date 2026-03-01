@@ -1,11 +1,12 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field, field_validator
 from functools import lru_cache
+from typing import Optional
 
 
 class LLMSettings(BaseSettings):
     
-    OPENROUTER_API_KEY: str = Field(..., description="API ключ OpenRouter")
+    OPENROUTER_API_KEY: Optional[str] = Field(..., description="API ключ OpenRouter")
     LLM_MODEL: str = Field(default="qwen/qwen3-coder:free", description="ID модели")
     LLM_TEMPERATURE: float = Field(default=0.1, ge=0.0, le=2.0)
     LLM_MAX_TOKENS: int = Field(default=1000, ge=1, le=32000)

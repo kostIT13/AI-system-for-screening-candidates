@@ -17,10 +17,6 @@ class ScoringRepository(ABC):
         return NotImplementedError
     
     @abstractmethod
-    async def get_vacancy_by_id(self, category: str) -> List[Scoring]:
-        return NotImplementedError
-    
-    @abstractmethod
     async def create(self, data: Scoring) -> Optional[Scoring]:
         raise NotImplementedError
     

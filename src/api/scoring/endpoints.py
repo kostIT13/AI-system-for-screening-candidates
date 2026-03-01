@@ -14,13 +14,7 @@ async def create_scoring(
     try:
         result = await service.calculate_match(
             candidate_id=scoring.candidate_id,
-            vacancy_id=scoring.vacancy_id,
-            llm_response=scoring.llm_raw_response,
-            analysis={
-                'match_score': scoring.match_score,
-                'confidence': scoring.confidence,
-                'analysis': scoring.analysis
-            }
+            vacancy_id=scoring.vacancy_id
         )
         return result
     except ValueError as e:

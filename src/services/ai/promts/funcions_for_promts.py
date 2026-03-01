@@ -46,7 +46,7 @@ def create_matching_prompt(candidate: Dict, vacancy: Dict) -> str:
 **Зарплата:** {format_salary(vacancy.get('salary_min'), vacancy.get('salary_max'))}
 **Тип занятости:** {vacancy.get('employment', 'N/A')}
 **Удалённая работа:** {vacancy.get('remote', 'N/A')}
-**Описание:** {vacancy.get('summary', 'N/A')[:300]}
+**Описание:** **Описание:** {(vacancy.get('summary') if isinstance(vacancy, dict) else getattr(vacancy, 'summary', None)) or 'N/A'[:300]}
 
 ## КАНДИДАТ:
 **Текущая должность:** {candidate.get('title', 'N/A')}
