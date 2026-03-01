@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from typing import Optional
 import sys
 from src.core.logging_settings import setup_logging
-from src.core.settings_llm import llm_settings
+from src.core.settings_llm import get_llm_settings
 
 
 load_dotenv()
@@ -34,6 +34,7 @@ if not DATABASE_URL:
 
 logger.info("Подключение к БД настроено")
 
-logger.info(f"LLM настроен: model={llm_settings.LLM_MODEL}")
+llm_settings = get_llm_settings()
+logger.info(f"LLM настроен: model={llm_settings.OPENROUTER_MODEL}")
 
 __all__ = ["DATABASE_URL", "llm_settings", "logger"]
