@@ -7,13 +7,14 @@ from src.core.database import engine
 from src.api.candidates.endpoints import router as candidates_router
 from src.api.vacancies.endpoints import router as vacancies_router
 from src.api.scoring.endpoints import router as scoring_router
+from sqlalchemy import text
 
 
 setup_logging(level=os.getenv("LOG_LEVEL", "INFO"))
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(titel="AI Candidate Screening")
+app = FastAPI(title="AI Candidate Screening")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,7 +22,7 @@ async def lifespan(app: FastAPI):
     
     try:
         async with engine.connect() as conn:
-            await conn.execute(lambda c: c.execute("SELECT 1"))
+            await conn.execute(text("SELECT 1"))
         logger.info("БД доступна")
     except Exception as e:
         logger.error(f"Ошибка подключения к БД: {e}")
