@@ -1,6 +1,30 @@
-__pycache__
-*.pyc
-.env
-.git
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Git
+.git/
 .gitignore
-README.md
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs & data
+*.log
+data/*.csv
+!.env

@@ -35,6 +35,6 @@ if not DATABASE_URL:
 logger.info("Подключение к БД настроено")
 
 llm_settings = get_llm_settings()
-logger.info(f"LLM настроен: model={llm_settings.OPENROUTER_MODEL}")
+logger.info(f"LLM настроен: model={llm_settings.OLLAMA_MODEL}")
 
 __all__ = ["DATABASE_URL", "llm_settings", "logger"]

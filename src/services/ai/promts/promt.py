@@ -30,3 +30,5 @@ SYSTEM_PROMPT = """Ты — эксперт по рекрутингу в IT-сф�
 - recommendation: "hire" (≥80), "consider" (50-79), "reject" (<50)
 - strengths/weaknesses: массив строк, может быть пустым
 - Никакого текста кроме JSON!"""
+
+
