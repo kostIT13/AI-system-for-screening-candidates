@@ -146,6 +146,9 @@ class ScoringService:
                 filtered.append(s)
             scores = filtered
         
+
+        scores.sort(key=lambda x: x.match_score, reverse=True)
+        
         output = io.StringIO()
         writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
         
