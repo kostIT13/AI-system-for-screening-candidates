@@ -33,3 +33,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
     
 SessionDep = Annotated[AsyncSession, Depends(get_db)]
+
+
+async def create_async_session():
+    return async_session_maker()
