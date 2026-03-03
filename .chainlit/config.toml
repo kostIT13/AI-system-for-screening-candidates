@@ -47,6 +47,9 @@ allow_thread_sharing = false
 # Enable favorite messages
 favorites = false
 
+[data_layer]
+enabled = false
+
 [features.slack]
 # Add emoji reaction when message is received (requires reactions:write OAuth scope)
 reaction_on_message_received = false

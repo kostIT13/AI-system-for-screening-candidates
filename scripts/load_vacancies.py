@@ -1,26 +1,30 @@
 import sys
+import asyncio
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.core.database import get_db
-from src.services.vacancies.parser import load_vacancies_from_csv
+from src.core.database import create_async_session
+from src.services.vacancies.parser import load_vacancies_from_csv_async
 
 
-def main():
-    db = next(get_db())
+async def main():
+    db = await create_async_session()
     csv_path = Path(__file__).parent.parent / 'data' / 'vacancies_main.csv'
     
     try:
-        count = load_vacancies_from_csv(db, str(csv_path))
+        with open(csv_path, 'rb') as f:
+            file_content = f.read()
+        
+        count = await load_vacancies_from_csv_async(db, file_content)
         print(f"Загружено {count} вакансий")
     except Exception as e:
         print(f"Ошибка: {e}")
-        db.rollback()
+        await db.rollback()
         raise
     finally:
-        db.close()
+        await db.close()
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
