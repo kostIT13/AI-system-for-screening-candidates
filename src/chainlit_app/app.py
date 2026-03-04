@@ -68,7 +68,7 @@ async def show_step_1():
     ).send()
     
     if not files:
-        await cl.Message(content="❌ Файл не загружен").send()
+        await cl.Message(content="Файл не загружен").send()
         return
     
     cl.user_session.set("candidate_file", files[0])
@@ -170,7 +170,7 @@ async def on_calc(action: cl.Action):
         await cl.Message(content="Ошибка: кандидат не загружен").send()
         return
     
-    await cl.Message(content="⏳ Обрабатываю данные...").send()
+    await cl.Message(content="Обрабатываю данные...").send()
     
     try:
         
