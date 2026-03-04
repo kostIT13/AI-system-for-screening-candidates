@@ -14,21 +14,53 @@ logger = logging.getLogger(__name__)
 
 @cl.on_chat_start
 async def start():
-    """Инициализация"""
     try:
         api_client = APIClient()
         cl.user_session.set("api_client", api_client)
         cl.user_session.set("step", 1)
-        logger.info("✅ API client initialized")
+        logger.info("API client initialized")
     except Exception as e:
-        await cl.Message(content=f"❌ Ошибка инициализации: {e}").send()
+        await cl.Message(content=f"Ошибка инициализации: {e}").send()
         return
     
+    await show_welcome()
+
+
+async def show_welcome():
+    
+    welcome_msg = """
+# AI Screening System
+
+Добро пожаловать в систему интеллектуального подбора персонала!
+
+## Что я умею:
+| Функция | Описание |
+|---------|----------|
+| **Анализ резюме** | Парсинг CSV с навыками, опытом, зарплатными ожиданиями |
+| **Сравнение с вакансией** | Оценка соответствия кандидата требованиям |
+| **AI-скоринг** | Расчёт match_score с помощью LLM (Ollama/Groq) |
+| **Детальный разбор** | Анализ по навыкам, опыту, зарплате, локации |
+
+## Как использовать:
+1. **Загрузите резюме кандидата** (CSV с колонками: `Category,Title,Exp_Years,...`)
+2. **Загрузите вакансию** (CSV) **или** введите описание текстом
+3. **Нажмите «Рассчитать»** — получите оценку соответствия
+
+## Формат CSV для кандидата:
+```csv
+Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary
+Python-разработчик,Backend Developer,3-5,"Python, Django, PostgreSQL",Москва,100000,180000,Полная,Нет,"Опыт разработки API"
+"""
+
+    start_action = cl.Action(name="start_upload", label="▶Начать загрузку", payload={})
+    await cl.Message(content=welcome_msg, actions=[start_action]).send()
+
+@cl.action_callback("start_upload")
+async def on_start_upload(action: cl.Action):
     await show_step_1()
 
 
 async def show_step_1():
-    """Шаг 1: Загрузка кандидата"""
     files = await cl.AskFileMessage(
         content="**Шаг 1/3:** Загрузите резюме кандидата (CSV)\n\nКолонки: `Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary`",
         accept={"text/csv": [".csv"]},
@@ -43,72 +75,90 @@ async def show_step_1():
     cl.user_session.set("step", 2)
     
     await cl.Message(
-        content="✅ Кандидат загружен!\n\n**Шаг 2/3:** Загрузите вакансию (CSV)\n\nИли напишите `skip` чтобы пропустить и ввести вакансию текстом."
+        content="Кандидат загружен!\n\n**Шаг 2/3:** Как указать вакансию?",
+        actions=[
+            cl.Action(name="vacancy_csv", label="Загрузить CSV", payload={"source": "csv"}),
+            cl.Action(name="vacancy_text", label="Ввести текстом", payload={"source": "text"}),
+        ]
+    ).send()
+
+@cl.action_callback("vacancy_csv")
+async def on_vacancy_csv(action: cl.Action):
+    cl.user_session.set("vacancy_source", "csv")
+    await show_step_2_csv()
+
+
+@cl.action_callback("vacancy_text")
+async def on_vacancy_text(action: cl.Action):
+    cl.user_session.set("vacancy_source", "text")
+    cl.user_session.set("step", 3)
+    
+    await cl.Message(
+        content="**Введите описание вакансии:**\n\nПример: `Frontend Developer, React, Vue, Москва, 80000-150000 ₽`"
     ).send()
 
 
-async def show_step_2():
-    """Шаг 2: Загрузка вакансии"""
+async def show_step_2_csv():
     files = await cl.AskFileMessage(
-        content="**Шаг 2/3:** Загрузите вакансию (CSV)\n\nКолонки: `Category,Title,Exp_Years_Min,Exp_Years_Max,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary`",
+        content="**Загрузите вакансию (CSV)**\n\nКолонки: `Category,Title,Exp_Years_Min,Exp_Years_Max,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary`",
         accept={"text/csv": [".csv"]},
         max_files=1,
     ).send()
     
-    if files:
-        cl.user_session.set("vacancy_file", files[0])
-        cl.user_session.set("vacancy_source", "csv")
-    else:
-        cl.user_session.set("vacancy_source", "text")
+    if not files:
+        await cl.Message(content="Файл не загружен").send()
+        return
     
+    cl.user_session.set("vacancy_file", files[0])
     cl.user_session.set("step", 3)
     
-    if cl.user_session.get("vacancy_source") == "csv":
-        await cl.Message(content="✅ Вакансия загружена!\n\n**Шаг 3/3:** Нажми кнопку для расчёта:", 
-                        actions=[cl.Action(name="calc", label="🚀 Рассчитать", payload={})]).send()
-    else:
-        await cl.Message(
-            content="💼 Введите описание вакансии текстом:\n\nПример: `Frontend Developer, React, Vue, Москва, 80000-150000 ₽`"
-        ).send()
+    await cl.Message(
+        content="Вакансия загружена!\n\n**Шаг 3/3:** Нажмите кнопку для расчёта:",
+        actions=[cl.Action(name="calc", label="Рассчитать", payload={})]
+    ).send()
+
+
+@cl.set_chat_profiles
+async def chat_profile():
+    return [
+        cl.ChatProfile(
+            name="AI scoring CV",
+            icon="https://ucarecdn.stepik.net/f621c671-b27b-48cf-8b95-8f6136963541/-/scale_crop/180x180/center/",
+            markdown_description="Скоринг резуме кандидатов с помощью LLM",
+        )
+    ]
 
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    """Обработка текстовых сообщений"""
     step = cl.user_session.get("step", 0)
+    vacancy_source = cl.user_session.get("vacancy_source", "csv")
     
-    # Пропуск загрузки вакансии
-    if step == 2 and message.content.strip().lower() == "skip":
-        cl.user_session.set("vacancy_source", "text")
-        cl.user_session.set("step", 3)
-        await cl.Message(
-            content="💼 Введите описание вакансии текстом:\n\nПример: `Frontend Developer, React, Vue, Москва`"
-        ).send()
-        return
-    
-    # Ввод вакансии текстом
-    if step == 3 and cl.user_session.get("vacancy_source") == "text":
+    if step == 3 and vacancy_source == "text":
         vacancy_text = message.content.strip()
         if len(vacancy_text) < 10:
-            await cl.Message(content="❌ Слишком коротко. Напишите полноценное описание.").send()
+            await cl.Message(content="Слишком коротко. Напишите полноценное описание.").send()
             return
         
         cl.user_session.set("vacancy_text", vacancy_text)
         cl.user_session.set("step", 4)
         
         await cl.Message(
-            content=f"✅ Вакансия: **{vacancy_text}**\n\nНажми кнопку:",
-            actions=[cl.Action(name="calc", label="🚀 Рассчитать", payload={})]
+            content=f"Вакансия: **{vacancy_text}**\n\nНажми кнопку:",
+            actions=[cl.Action(name="calc", label="Рассчитать", payload={})]
         ).send()
         return
     
-    # Другие сообщения
-    await cl.Message(content="Напишите `/start` для начала или следуйте инструкциям выше.").send()
+    if message.content.strip().lower() == "/start":
+        cl.user_session.set("step", 1)
+        await show_welcome()
+        return
+    
+    await cl.Message(content="Используйте кнопки выше или напишите `/start` для начала.").send()
 
 
 @cl.action_callback("calc")
 async def on_calc(action: cl.Action):
-    """Кнопка «Рассчитать»"""
     
     api_client: APIClient = cl.user_session.get("api_client")
     candidate_file = cl.user_session.get("candidate_file")
@@ -117,57 +167,53 @@ async def on_calc(action: cl.Action):
     vacancy_source = cl.user_session.get("vacancy_source", "text")
     
     if not all([api_client, candidate_file]):
-        await cl.Message(content="❌ Ошибка: кандидат не загружен").send()
+        await cl.Message(content="Ошибка: кандидат не загружен").send()
         return
     
     await cl.Message(content="⏳ Обрабатываю данные...").send()
     
     try:
-        # ===== 1. Загрузка и парсинг кандидата =====
+        
         candidate_content = await read_file_content(candidate_file)
         if not candidate_content:
-            await cl.Message(content="❌ Не удалось прочитать файл кандидата").send()
+            await cl.Message(content="Не удалось прочитать файл кандидата").send()
             return
         
         candidates_data = await parse_candidates_csv(candidate_content.encode('utf-8'))
         if not candidates_data:
-            await cl.Message(content="❌ Ошибка парсинга CSV кандидата").send()
+            await cl.Message(content="Ошибка парсинга CSV кандидата").send()
             return
         
         candidate_data = candidates_data[0]
         candidate_data['id'] = f"temp_{uuid.uuid4()}"
-        candidate = await api_client.create_candidate(candidate_data)  # ✅ Создаём через API
+        candidate = await api_client.create_candidate(candidate_data)
         candidate_id = candidate['id']
         
-        await cl.Message(content=f"👤 Кандидат: **{candidate.get('title')}**").send()
+        await cl.Message(content=f"Кандидат: **{candidate.get('title')}**").send()
         
-        # ===== 2. Обработка вакансии =====
         vacancy_id = None
         
         if vacancy_source == "csv" and vacancy_file:
-            # Загружаем вакансию из CSV
             vacancy_content = await read_file_content(vacancy_file)
             if not vacancy_content:
-                await cl.Message(content="❌ Не удалось прочитать файл вакансии").send()
+                await cl.Message(content="Не удалось прочитать файл вакансии").send()
                 return
             
             vacancies_data = await parse_vacancies_csv(vacancy_content.encode('utf-8'))
             if not vacancies_data:
-                await cl.Message(content="❌ Ошибка парсинга CSV вакансии").send()
+                await cl.Message(content="Ошибка парсинга CSV вакансии").send()
                 return
             
             vacancy_data = vacancies_data[0]
             vacancy_data['id'] = f"temp_vac_{uuid.uuid4()}"
             vacancy_data['status'] = 'active'
             
-            # Создаём вакансию через API
             vacancy = await api_client.create_vacancy(vacancy_data)
             vacancy_id = vacancy['id']
             
-            await cl.Message(content=f"💼 Вакансия: **{vacancy.get('title')}**").send()
+            await cl.Message(content=f"Вакансия: **{vacancy.get('title')}**").send()
             
         else:
-            # Ищем существующую вакансию по тексту (простой поиск)
             vacancy_filters = parse_vacancy_text(vacancy_text)
             vacancies = await api_client.get_vacancies(
                 category=vacancy_filters.get('category'),
@@ -177,7 +223,6 @@ async def on_calc(action: cl.Action):
             )
             
             if not vacancies:
-                # Если не нашли — создаём временную
                 vacancy_data = {
                     'id': f"temp_vac_{uuid.uuid4()}",
                     'category': vacancy_filters.get('category', 'Разработчик'),
@@ -192,23 +237,20 @@ async def on_calc(action: cl.Action):
                 vacancy = vacancies[0]
                 vacancy_id = vacancy['id']
             
-            await cl.Message(content=f"💼 Вакансия: **{vacancy.get('title', vacancy_text[:30])}**").send()
+            await cl.Message(content=f"Вакансия: **{vacancy.get('title', vacancy_text[:30])}**").send()
         
-        # ===== 3. Скоринг =====
-        await cl.Message(content="⚡ Считаем соответствие...").send()
+        await cl.Message(content="Считаем соответствие...").send()
         
         score = await api_client.calculate_match(candidate_id, vacancy_id)
         
-        # ===== 4. Показ результатов =====
         await show_single_result(score, candidate, vacancy)
         
     except Exception as e:
-        logger.error(f"❌ Calculate error: {type(e).__name__}: {e}")
-        await cl.Message(content=f"❌ Ошибка: {type(e).__name__}: {str(e)[:200]}").send()
+        logger.error(f"Calculate error: {type(e).__name__}: {e}")
+        await cl.Message(content=f"Ошибка: {type(e).__name__}: {str(e)[:200]}").send()
 
 
 async def read_file_content(file) -> Optional[str]:
-    """Универсальное чтение файла из Chainlit"""
     content = None
     
     if hasattr(file, 'path') and file.path:
@@ -230,24 +272,20 @@ async def read_file_content(file) -> Optional[str]:
 
 
 def parse_vacancy_text(text: str) -> Dict:
-    """Простой парсинг текста вакансии в фильтры"""
     result = {'category': None, 'location': None, 'skills': []}
     text_lower = text.lower()
     
-    # Локация
     locations = {'москва': 'Москва', 'спб': 'Санкт-Петербург', 'казань': 'Казань', 'регионы': 'Регионы'}
     for key, value in locations.items():
         if key in text_lower:
             result['location'] = value
             break
     
-    # Навыки
     known_skills = ['python', 'django', 'react', 'vue', 'angular', 'javascript', 'typescript', 'postgresql', 'docker']
     for skill in known_skills:
         if skill in text_lower:
             result['skills'].append(skill.capitalize())
     
-    # Категория (первое слово)
     words = text.split(',')
     if words:
         result['category'] = words[0].strip()
@@ -256,7 +294,6 @@ def parse_vacancy_text(text: str) -> Dict:
 
 
 async def show_single_result(score: Dict, candidate: Dict, vacancy: Dict):
-    """Показ результата для одной пары кандидат-вакансия"""
     
     match_score = score.get('match_score', 0)
     confidence = score.get('confidence', 0)
@@ -266,9 +303,9 @@ async def show_single_result(score: Dict, candidate: Dict, vacancy: Dict):
     rec = "Пригласить" if match_score >= 80 else "Рассмотреть" if match_score >= 50 else "Отклонить"
     
     msg = f"""
-# 📊 Результат AI-скоринга
+# Результат AI-скоринга
 
-## 👤 Кандидат
+## Кандидат
 **{candidate.get('title')}** ({candidate.get('category')})
 📍 {candidate.get('location')} | 💰 {candidate.get('salary_min') or '?'}-{candidate.get('salary_max') or '?'} ₽
 
@@ -278,12 +315,12 @@ async def show_single_result(score: Dict, candidate: Dict, vacancy: Dict):
 
 ---
 
-## 🎯 Оценка соответствия
+## Оценка соответствия
 {emoji} **Match Score: {match_score:.1f}%**
-- 🔍 Уверенность: {confidence:.0%}
-- 🎯 Рекомендация: **{rec}**
+- Уверенность: {confidence:.0%}
+- Рекомендация: **{rec}**
 
-## 📋 Детали анализа
+## Детали анализа
 """
     
     if analysis.get('skills_match'):
@@ -301,7 +338,7 @@ async def show_single_result(score: Dict, candidate: Dict, vacancy: Dict):
             msg += f"  • {s}\n"
     
     if analysis.get('weaknesses'):
-        msg += f"\n⚠️ **Зоны роста:**\n"
+        msg += f"\n**Зоны роста:**\n"
         for w in analysis['weaknesses'][:3]:
             msg += f"  • {w}\n"
     
@@ -310,8 +347,7 @@ async def show_single_result(score: Dict, candidate: Dict, vacancy: Dict):
 
 @cl.on_chat_end
 async def end():
-    """Очистка"""
     api_client = cl.user_session.get("api_client")
     if api_client:
         await api_client.close()
-        logger.info("✅ API client closed")
+        logger.info("API client closed")
