@@ -68,6 +68,8 @@ async def upload_candidates_csv(
         reader = csv.DictReader(io.StringIO(csv_content))
         
         count = 0
+        candidate_ids = [] 
+        
         for row in reader:
             candidate_data = {
                 'category': row.get('Category', ''),
@@ -81,11 +83,18 @@ async def upload_candidates_csv(
                 'remote': row.get('Remote', ''),
                 'summary': row.get('Summary', '')[:500] if row.get('Summary') else None
             }
-            await service.create_candidate(candidate_data)
+            candidate = await service.create_candidate(candidate_data)
+            candidate_ids.append(candidate.id)
             count += 1
-        
-        return {"message": f"Загружено {count} кандидатов", "count": count}
+        return {
+            "message": f"Загружено {count} кандидатов",
+            "count": count,
+            "candidate_ids": candidate_ids 
+        }
     
+    except ValueError as e:
+        # Обработка ошибок парсинга чисел
+        raise HTTPException(status_code=400, detail=f"Invalid CSV format: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
 

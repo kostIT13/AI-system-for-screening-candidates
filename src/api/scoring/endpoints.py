@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, HTTPException, Query
-from src.api.scoring.schemas import ScoringResponse, ScoringCreate, BatchScoreRequest
+from src.api.scoring.schemas import ScoringResponse, BatchScoreRequest, CreateScoringRequest
 from src.api.scoring.dependencies import ScoringServiceDependency
 from typing import List, Optional
 from datetime import datetime
@@ -10,13 +10,13 @@ router = APIRouter(prefix='/api/v1/scoring', tags=['Scoring'])
 
 @router.post("/", response_model=ScoringResponse, status_code=status.HTTP_201_CREATED)
 async def create_scoring(
-    scoring: ScoringCreate,
+    request: CreateScoringRequest,
     service: ScoringServiceDependency
 ):
     try:
         result = await service.calculate_match(
-            candidate_id=scoring.candidate_id,
-            vacancy_id=scoring.vacancy_id
+            candidate_id=request.candidate_id,
+            vacancy_id=request.vacancy_id
         )
         return result
     except ValueError as e:

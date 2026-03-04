@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from datetime import datetime
 
 
@@ -12,14 +12,26 @@ class ScoringBase(BaseModel):
     llm_raw_response: Optional[str] = Field(None, description="Сырой ответ LLM")
 
 
-class ScoringCreate(ScoringBase):
-    pass
+class CreateScoringRequest(BaseModel):
+    candidate_id: str = Field(..., description="ID кандидата")
+    vacancy_id: str = Field(..., description="ID вакансии")
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ScoringResponse(ScoringBase):
+class ScoringResponse(BaseModel):
     id: str
     created_at: datetime
-
+    updated_at: Optional[datetime] = None
+    
+    candidate_id: str
+    vacancy_id: str
+    
+    match_score: float = Field(..., ge=0, le=100)
+    confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
+    analysis: Optional[Dict[str, Any]] = None
+    llm_raw_response: Optional[str] = None
+    
     model_config = ConfigDict(from_attributes=True)
 
 

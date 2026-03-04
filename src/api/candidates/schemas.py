@@ -34,6 +34,10 @@ class CandidateUpdate(BaseModel):
 
 class CandidateResponse(BaseModel):
     id: str 
+    title: str
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+    location: str
     created_at: datetime 
     updated_at: datetime 
 

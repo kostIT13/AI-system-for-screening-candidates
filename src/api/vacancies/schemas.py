@@ -34,6 +34,27 @@ class VacanciesUpdate(BaseModel):
     status: Optional[str] = None
 
 
+class VacancyResponse(BaseModel):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    
+    category: str
+    title: str
+    exp_years_min: Optional[int] = None
+    exp_years_max: Optional[int] = None
+    key_skills: Optional[List[str]] = None
+    location: str
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+    employment: str
+    remote: str
+    summary: Optional[str] = None
+    status: str = 'active'
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+
 class VacanciesResponse(BaseModel):
     id: str
     created_at: datetime

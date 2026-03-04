@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Query, status, HTTPException, UploadFile, File
-from src.api.vacancies.schemas import VacanciesResponse, VacanciesCreate, VacanciesUpdate, VacanciesStats
+from fastapi import APIRouter, Query, status, HTTPException, UploadFile, File, Depends
+from src.api.vacancies.schemas import VacanciesResponse, VacanciesCreate, VacanciesUpdate, VacanciesStats, VacancyResponse
 from typing import List, Optional
 from src.api.vacancies.dependencies import VacancyServiceDependency
 import io
 import csv
+from src.services.vacancies.vacancies_service import VacancyService
+
 
 
 router = APIRouter(prefix="/api/v1/vacancies", tags=["Vacancies"])
 
 
-@router.get('/', response_model=VacanciesResponse)
+@router.get('/', response_model=List[VacancyResponse])
 async def get_vacancies(
     service: VacancyServiceDependency,
     skip: int = Query(0, ge=0, description="Пропустить N записей"),
@@ -25,10 +27,10 @@ async def get_vacancies(
         filters['location'] = location
     if status:
         filters['status'] = status
-    return await service.get_candidates(skip=skip, limit=limit, **filters)
+    return await service.get_vacancies(skip=skip, limit=limit, **filters)
 
 
-@router.get('/{vacancy_id}', response_model=VacanciesResponse)
+@router.get('/{vacancy_id}', response_model=VacancyResponse)
 async def get_vacancy(vacancy_id: str, service: VacancyServiceDependency):
     vacancy = await service.get_vacancy(vacancy_id)
     if not vacancy:
@@ -36,12 +38,12 @@ async def get_vacancy(vacancy_id: str, service: VacancyServiceDependency):
     return vacancy
 
 
-@router.post('/', response_model=VacanciesResponse, status_code=status.HTTP_201_CREATED)
+@router.post('/', response_model=VacancyResponse, status_code=status.HTTP_201_CREATED)
 async def create_vacancy(vacancy: VacanciesCreate, service: VacancyServiceDependency):
     return await service.create_vacancy(vacancy.model_dump())
 
 
-@router.put('/{vacancy_id}', response_model=VacanciesResponse)
+@router.put('/{vacancy_id}', response_model=VacancyResponse)
 async def update_vacancy(vacancy_id: str, vacancy_update: VacanciesUpdate, service: VacancyServiceDependency):
     updated = await service.update_vacancy(vacancy_id, vacancy_update.model_dump(exclude_unset=True))
     if not updated:
@@ -180,7 +182,7 @@ async def get_by_category(category: str, service: VacancyServiceDependency):
     return await service.get_vacancies_by_category(category)
 
 
-@router.put('/{vacancy_id}/close', response_model=VacanciesResponse)
+@router.put('/{vacancy_id}/close', response_model=VacancyResponse)
 async def close_vacancy(
     vacancy_id: str,
     service: VacancyServiceDependency
@@ -191,7 +193,7 @@ async def close_vacancy(
     return updated
 
 
-@router.put('/{vacancy_id}/open', response_model=VacanciesResponse)
+@router.put('/{vacancy_id}/open', response_model=VacancyResponse)
 async def open_vacancy(
     vacancy_id: str,
     service: VacancyServiceDependency

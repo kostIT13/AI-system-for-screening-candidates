@@ -11,10 +11,11 @@ API_BASE_URL = "http://backend:8000/api/v1"  # Внутри Docker
 class APIClient:
     """HTTP-клиент для взаимодействия с FastAPI API"""
     
-    def __init__(self, base_url: str = API_BASE_URL, timeout: float = 30.0):
+    def __init__(self, base_url: str = API_BASE_URL, timeout: float = 120.0):
         self.base_url = base_url.rstrip('/')
         self.timeout = timeout
-        self.client = httpx.AsyncClient(timeout=timeout)
+        self.client = httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=10.0, read=timeout, write=10.0), limits=httpx.Limits(max_keepalive_connections=10, max_connections=20))
+        
     
     async def close(self):
         await self.client.aclose()
@@ -107,3 +108,17 @@ class APIClient:
         response = await self.client.get(f"{self.base_url}/scoring/export/csv", params=filters)
         response.raise_for_status()
         return response.content
+    
+
+    async def create_candidate(self, candidate_data: Dict) -> Dict:
+        """POST /candidates/ — создать кандидата"""
+        response = await self.client.post(f"{self.base_url}/candidates/", json=candidate_data)
+        response.raise_for_status()
+        return response.json()
+
+
+    async def create_vacancy(self, vacancy_data: Dict) -> Dict:
+        """POST /vacancies/ — создать вакансию"""
+        response = await self.client.post(f"{self.base_url}/vacancies/", json=vacancy_data)
+        response.raise_for_status()
+        return response.json()
