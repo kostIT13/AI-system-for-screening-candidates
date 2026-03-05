@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "chainlit>=2.9.6",
     "fastapi>=0.133.0",
+    "grep>=0.3.2",
     "langchain>=1.2.10",
     "openai>=2.24.0",
     "psycopg>=3.3.3",

@@ -18,9 +18,10 @@ async def start():
         api_client = APIClient()
         cl.user_session.set("api_client", api_client)
         cl.user_session.set("step", 1)
-        logger.info("API client initialized")
+        cl.user_session.set("scoring_mode", "single")
+        logger.info("✅ API client initialized")
     except Exception as e:
-        await cl.Message(content=f"Ошибка инициализации: {e}").send()
+        await cl.Message(content=f"❌ Ошибка инициализации: {e}").send()
         return
     
     await show_welcome()
@@ -52,12 +53,62 @@ Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Re
 Python-разработчик,Backend Developer,3-5,"Python, Django, PostgreSQL",Москва,100000,180000,Полная,Нет,"Опыт разработки API"
 """
 
-    start_action = cl.Action(name="start_upload", label="▶Начать загрузку", payload={})
-    await cl.Message(content=welcome_msg, actions=[start_action]).send()
+    await cl.Message(
+    content=welcome_msg + "\n\n---\n\n**Выберите режим:**",
+    actions=[
+        cl.Action(name="single_mode", label="👤 Один кандидат (детально)", payload={}),
+        cl.Action(name="batch_mode", label="👥 Массовый скоринг (CSV)", payload={}),
+    ]
+    ).send()
 
 @cl.action_callback("start_upload")
 async def on_start_upload(action: cl.Action):
     await show_step_1()
+
+
+async def show_results_table(results: List[Dict], vacancy: Dict):
+    """Показывает результаты массового скоринга (markdown-таблица)"""
+    
+    # Сортируем по score (убывание)
+    results.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Сводка
+    best = results[0] if results else None
+    avg_score = sum(r["score"] for r in results) / len(results) if results else 0
+    
+    # Формируем сообщение с markdown-таблицей
+    msg = f"""
+# 📊 Результаты массового скоринга
+
+**Вакансия:** {vacancy.get('title', 'N/A')}  
+**Обработано кандидатов:** {len(results)}  
+**🏆 Лучший:** {best['candidate'].get('title') if best else '—'} ({best['score']:.1f}% if best else '—')  
+**📈 Средний score:** {avg_score:.1f}%
+
+---
+
+## Таблица результатов
+
+| # | Кандидат | Опыт | Навыки | Match Score | Рекомендация |
+|---|----------|------|--------|-------------|--------------|
+"""
+    
+    for i, item in enumerate(results, 1):
+        cand = item["candidate"]
+        score = item["score"]
+        
+        emoji = "🟢" if score >= 80 else "🟡" if score >= 50 else "🔴"
+        rec = "Пригласить" if score >= 80 else "Рассмотреть" if score >= 50 else "Отклонить"
+        
+        skills = ", ".join((cand.get('key_skills') or [])[:2]) if cand.get('key_skills') else "—"
+        exp = f"{cand.get('exp_years')} лет" if cand.get('exp_years') else "—"
+        title = cand.get('title', 'N/A')
+        
+        msg += f"| {i} | {title} | {exp} | {skills} | {emoji} {score:.1f}% | {rec} |\n"
+    
+    msg += "\n*Для детального разбора выберите режим «👤 Один кандидат»*"
+    
+    await cl.Message(content=msg).send()
 
 
 async def show_step_1():
@@ -82,6 +133,7 @@ async def show_step_1():
         ]
     ).send()
 
+
 @cl.action_callback("vacancy_csv")
 async def on_vacancy_csv(action: cl.Action):
     cl.user_session.set("vacancy_source", "csv")
@@ -95,6 +147,40 @@ async def on_vacancy_text(action: cl.Action):
     
     await cl.Message(
         content="**Введите описание вакансии:**\n\nПример: `Frontend Developer, React, Vue, Москва, 80000-150000 ₽`"
+    ).send()
+
+@cl.action_callback("single_mode")
+async def on_single_mode(action: cl.Action):
+    """Режим: один кандидат с детальным разбором"""
+    cl.user_session.set("scoring_mode", "single")
+    await show_step_1()
+
+
+@cl.action_callback("batch_mode")
+async def on_batch_mode(action: cl.Action):
+    """Режим: массовый скоринг (таблица результатов)"""
+    cl.user_session.set("scoring_mode", "batch")
+    
+    # Для массового режима можно разрешить несколько файлов
+    files = await cl.AskFileMessage(
+        content="**Массовый скоринг:** Загрузите CSV с кандидатами\n\nКаждая строка — один кандидат.\n\nКолонки: `Category,Title,Exp_Years,Key_Skills,Location,Salary_Min,Salary_Max,Employment,Remote,Summary`",
+        accept={"text/csv": [".csv"]},
+        max_files=1,
+    ).send()
+    
+    if not files:
+        await cl.Message(content="❌ Файл не загружен").send()
+        return
+    
+    cl.user_session.set("candidate_file", files[0])
+    cl.user_session.set("step", 2)
+    
+    await cl.Message(
+        content="✅ Файл загружен!\n\n**Шаг 2/3:** Как указать вакансию?",
+        actions=[
+            cl.Action(name="vacancy_csv", label="📄 Загрузить CSV", payload={"source": "csv"}),
+            cl.Action(name="vacancy_text", label="✍️ Ввести текстом", payload={"source": "text"}),
+        ]
     ).send()
 
 
@@ -156,63 +242,62 @@ async def on_message(message: cl.Message):
     
     await cl.Message(content="Используйте кнопки выше или напишите `/start` для начала.").send()
 
-
 @cl.action_callback("calc")
 async def on_calc(action: cl.Action):
+    """Кнопка «Рассчитать» — работает в обоих режимах"""
     
     api_client: APIClient = cl.user_session.get("api_client")
     candidate_file = cl.user_session.get("candidate_file")
     vacancy_file = cl.user_session.get("vacancy_file")
     vacancy_text = cl.user_session.get("vacancy_text")
     vacancy_source = cl.user_session.get("vacancy_source", "text")
+    scoring_mode = cl.user_session.get("scoring_mode", "single")  # Новый параметр
     
     if not all([api_client, candidate_file]):
-        await cl.Message(content="Ошибка: кандидат не загружен").send()
+        await cl.Message(content="❌ Ошибка: кандидат не загружен").send()
         return
     
-    await cl.Message(content="Обрабатываю данные...").send()
+    await cl.Message(content="⏳ Обрабатываю данные...").send()
     
     try:
-        
+        # ===== 1. Парсинг кандидатов =====
         candidate_content = await read_file_content(candidate_file)
-        if not candidate_content:
-            await cl.Message(content="Не удалось прочитать файл кандидата").send()
-            return
-        
         candidates_data = await parse_candidates_csv(candidate_content.encode('utf-8'))
+        
         if not candidates_data:
-            await cl.Message(content="Ошибка парсинга CSV кандидата").send()
+            await cl.Message(content="❌ Ошибка парсинга CSV").send()
             return
         
-        candidate_data = candidates_data[0]
-        candidate_data['id'] = f"temp_{uuid.uuid4()}"
-        candidate = await api_client.create_candidate(candidate_data)
-        candidate_id = candidate['id']
+        # ===== 2. Создаём кандидатов в БД =====
+        candidate_ids = []
         
-        await cl.Message(content=f"Кандидат: **{candidate.get('title')}**").send()
+        if scoring_mode == "batch":
+            # Массовый режим: все кандидаты из CSV (лимит 20 для скорости)
+            for i, candidate_data in enumerate(candidates_data[:20]):
+                candidate_data['id'] = f"temp_{uuid.uuid4()}"
+                candidate = await api_client.create_candidate(candidate_data)
+                candidate_ids.append(candidate['id'])
+            
+            await cl.Message(content=f"👥 Загружено {len(candidate_ids)} кандидатов").send()
+        else:
+            # Одиночный режим: только первый кандидат
+            candidate_data = candidates_data[0]
+            candidate_data['id'] = f"temp_{uuid.uuid4()}"
+            candidate = await api_client.create_candidate(candidate_data)
+            candidate_ids = [candidate['id']]
+            await cl.Message(content=f"👤 Кандидат: **{candidate.get('title')}**").send()
         
+        # ===== 3. Обработка вакансии (одинаково для обоих режимов) =====
         vacancy_id = None
         
         if vacancy_source == "csv" and vacancy_file:
             vacancy_content = await read_file_content(vacancy_file)
-            if not vacancy_content:
-                await cl.Message(content="Не удалось прочитать файл вакансии").send()
-                return
-            
             vacancies_data = await parse_vacancies_csv(vacancy_content.encode('utf-8'))
-            if not vacancies_data:
-                await cl.Message(content="Ошибка парсинга CSV вакансии").send()
-                return
-            
             vacancy_data = vacancies_data[0]
             vacancy_data['id'] = f"temp_vac_{uuid.uuid4()}"
             vacancy_data['status'] = 'active'
-            
             vacancy = await api_client.create_vacancy(vacancy_data)
             vacancy_id = vacancy['id']
-            
-            await cl.Message(content=f"Вакансия: **{vacancy.get('title')}**").send()
-            
         else:
             vacancy_filters = parse_vacancy_text(vacancy_text)
             vacancies = await api_client.get_vacancies(
@@ -236,18 +321,41 @@ async def on_calc(action: cl.Action):
             else:
                 vacancy = vacancies[0]
                 vacancy_id = vacancy['id']
+        
+        # ===== 4. Скоринг =====
+        if scoring_mode == "batch":
+            await cl.Message(content=f"⚡ Считаем скоринг для {len(candidate_ids)} кандидатов...").send()
             
-            await cl.Message(content=f"Вакансия: **{vacancy.get('title', vacancy_text[:30])}**").send()
-        
-        await cl.Message(content="Считаем соответствие...").send()
-        
-        score = await api_client.calculate_match(candidate_id, vacancy_id)
-        
-        await show_single_result(score, candidate, vacancy)
+            results = []
+            for cid in candidate_ids:
+                try:
+                    score = await api_client.calculate_match(cid, vacancy_id)
+                    candidate = await api_client.get_candidate(cid)
+                    results.append({
+                        "candidate": candidate,
+                        "score": score.get('match_score', 0),
+                        "confidence": score.get('confidence', 0),
+                        "analysis": score.get('analysis', {})
+                    })
+                except Exception as e:
+                    logger.warning(f"Scoring failed for {cid}: {e}")
+                    continue
+            
+            if not results:
+                await cl.Message(content="⚠️ Не удалось рассчитать скоринг").send()
+                return
+            
+            await show_results_table(results, vacancy)
+            
+        else:
+            # Одиночный режим: детальный результат
+            score = await api_client.calculate_match(candidate_ids[0], vacancy_id)
+            candidate = await api_client.get_candidate(candidate_ids[0])
+            await show_single_result(score, candidate, vacancy)
         
     except Exception as e:
-        logger.error(f"Calculate error: {type(e).__name__}: {e}")
-        await cl.Message(content=f"Ошибка: {type(e).__name__}: {str(e)[:200]}").send()
+        logger.error(f"❌ Calculate error: {type(e).__name__}: {e}")
+        await cl.Message(content=f"❌ Ошибка: {type(e).__name__}: {str(e)[:200]}").send()
 
 
 async def read_file_content(file) -> Optional[str]:

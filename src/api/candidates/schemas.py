@@ -35,6 +35,8 @@ class CandidateUpdate(BaseModel):
 class CandidateResponse(BaseModel):
     id: str 
     title: str
+    exp_years: Optional[int] = None 
+    key_skills: Optional[List[str]] = None
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
     location: str
