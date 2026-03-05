@@ -19,9 +19,9 @@ async def start():
         cl.user_session.set("api_client", api_client)
         cl.user_session.set("step", 1)
         cl.user_session.set("scoring_mode", "single")
-        logger.info("✅ API client initialized")
+        logger.info("API client initialized")
     except Exception as e:
-        await cl.Message(content=f"❌ Ошибка инициализации: {e}").send()
+        await cl.Message(content=f"Ошибка инициализации: {e}").send()
         return
     
     await show_welcome()
@@ -67,23 +67,18 @@ async def on_start_upload(action: cl.Action):
 
 
 async def show_results_table(results: List[Dict], vacancy: Dict):
-    """Показывает результаты массового скоринга (markdown-таблица)"""
-    
-    # Сортируем по score (убывание)
     results.sort(key=lambda x: x["score"], reverse=True)
     
-    # Сводка
     best = results[0] if results else None
     avg_score = sum(r["score"] for r in results) / len(results) if results else 0
     
-    # Формируем сообщение с markdown-таблицей
     msg = f"""
-# 📊 Результаты массового скоринга
+# Результаты массового скоринга
 
 **Вакансия:** {vacancy.get('title', 'N/A')}  
 **Обработано кандидатов:** {len(results)}  
-**🏆 Лучший:** {best['candidate'].get('title') if best else '—'} ({best['score']:.1f}% if best else '—')  
-**📈 Средний score:** {avg_score:.1f}%
+**Лучший:** {best['candidate'].get('title') if best else '—'} ({best['score']:.1f}% if best else '—')  
+**Средний score:** {avg_score:.1f}%
 
 ---
 
