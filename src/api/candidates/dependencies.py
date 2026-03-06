@@ -5,7 +5,6 @@ from typing import Annotated
 from fastapi import Depends
 
 
-
 async def get_candidate_service(db: AsyncSession = Depends(get_db)) -> CandidateService:
     return CandidateService(db)
 
