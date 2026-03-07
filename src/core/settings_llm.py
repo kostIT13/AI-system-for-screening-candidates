@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, field_validator, model_validator, ConfigDict  # ✅ Добавили ConfigDict
+from pydantic import Field, field_validator, model_validator, ConfigDict  
 from typing import Optional
 import logging
 
@@ -31,12 +31,11 @@ class LLMSettings(BaseSettings):
     @model_validator(mode='after')
     def validate_consistency(self) -> 'LLMSettings':
         if self.USE_FALLBACK_ONLY:
-            logger.info("⚙ USE_FALLBACK_ONLY=true - LLM будет пропущен, используется rule-based")
+            logger.info("USE_FALLBACK_ONLY=true - LLM будет пропущен, используется rule-based")
         else:
-            logger.info(f"⚙ LLM mode: provider=ollama, model={self.OLLAMA_MODEL}, url={self.OLLAMA_BASE_URL}")
+            logger.info(f"LLM mode: provider=ollama, model={self.OLLAMA_MODEL}, url={self.OLLAMA_BASE_URL}")
         return self
 
-    # ✅ Pydantic v2 стиль
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
