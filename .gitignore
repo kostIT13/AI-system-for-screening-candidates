@@ -23,6 +23,7 @@ temp/
 .git/
 .gitignore
 .env
+.env.test
 *.log
 .DS_Store
 data/*.csv
