@@ -18,6 +18,7 @@ class ScoringService:
         self.candidate_service = CandidateService(db)
         self.vacancy_service = VacancyService(db)
         self.scoring_engine = ScoringEngine()
+        
 
     async def calculate_match(
         self, 
