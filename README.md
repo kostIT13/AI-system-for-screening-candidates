@@ -10,34 +10,34 @@
 # Необходимые компоненты
 * Установленные Docker и Docker Compose
 * Установленный и запущенный локально Ollama с загруженной моделью llama3.2:3b:
-```
-bash
+  
+```bash 
 ollama pull llama3.2:3b
 ```
 
 # Установка и настройка
 **1. Клонируйте репозиторий**
-```
-bash
+
+```bash
 git clone https://github.com/kostIT13/AI-system-for-screening-candidates.git
 cd AI-system-for-screening-candidates
 ```
 **2. Настройте переменные окружения**
 Скопируйте пример файла окружения и отредактируйте значения при необходимости (особенно пароли базы данных).
-```
-bash
+
+```bash
 cp .env.example .env
 ```
 **3. Запустите с помощью Docker Compose**
 Эта команда соберет образы и запустит бэкенд API, базу данных и фронтенд Chainlit.
-```
-bash
+
+```bash
 docker-compose up --build
 ```
 **4. Выполните миграции базы данных**
 Пока контейнеры работают, примените миграции для создания схемы базы данных.
-```
-bash
+
+```bash
 docker-compose exec backend alembic upgrade head
 ```
 **5. Откройте приложения**
