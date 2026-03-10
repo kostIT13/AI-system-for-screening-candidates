@@ -11,8 +11,6 @@ SYSTEM_PROMPT = """Ты — эксперт по рекрутингу в IT-сф�
 ## ФОРМАТ ОТВЕТА:
 Верни ТОЛЬКО валидный JSON без markdown-блоков, без пояснений:
 {
-    "match_score": 0-100,
-    "confidence": 0.0-1.0,
     "analysis": {
         "skills_match": "краткое описание соответствия навыков",
         "experience_match": "краткое описание соответствия опыта",
@@ -21,7 +19,10 @@ SYSTEM_PROMPT = """Ты — эксперт по рекрутингу в IT-сф�
         "strengths": ["сильная сторона 1", "сильная сторона 2"],
         "weaknesses": ["слабая сторона 1"],
         "recommendation": "hire" | "consider" | "reject"
-    }
+    },
+    "confidence": 0.0-1.0,
+    "match_score": 0-100
+    
 }
 
 ## ПРАВИЛА:
