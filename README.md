@@ -42,6 +42,38 @@
 * ⚖️ Fairness: контроль предвзятости по демографическим признакам
 * 📊 Визуализация воронки отбора
 
+## 🛠 Технологический стек 
+**Бэкенд и язык**
+* Python 3.11+ — основной язык разработки
+* FastAPI 0.109+ — асинхронный веб-фреймворк для API
+* Pydantic 2.0+ — валидация данных и сериализация
+
+**ИИ и обработка текста**
+* Ollama — локальный запуск больших языковых моделей
+* Llama 3.2:3b — основная модель для анализа и скоринга
+* LangChain + langchain-community — оркестрация промптов и цепочек
+* spaCy / nltk (опционально) — предобработка текста
+
+**Фронтенд и интерфейс**
+* Chainlit — интерактивный чат-интерфейс для работы с ИИ
+* Swagger UI (встроен в FastAPI) — документация API
+
+**База данных и хранение**
+* PostgreSQL 15+ — реляционная база данных
+* SQLAlchemy 2.0 — ORM для работы с БД
+* Alembic — миграции схемы базы данных
+
+**Инфраструктура и деплой**
+* Docker + Docker Compose — контейнеризация и оркестрация
+* uv — быстрый менеджер пакетов и виртуальных окружений
+
+**Тестирование и качество кода**
+* pytest — фреймворк для тестирования
+* httpx — асинхронный клиент для тестов API
+* factory-boy — фабрики тестовых данных
+* pytest-cov — отчёт о покрытии кода
+* ruff / mypy — линтинг и проверка типов
+
 ## 🏗️ Архитектура проекта
 ```
 📦 AI-system-for-screening-candidates
@@ -111,6 +143,45 @@
 ├── 📄 pyproject.toml           
 ├── 📄 .env.example             
 └── 📄 README.md                
+```
+
+## 🚀 Быстрый старт
+**Предварительные требования**
+* Docker и Docker Compose 
+* Ollama установлен локально (опционально, если не используете контейнер)
+* Минимум 8 ГБ ОЗУ для запуска Llama 3.2:3b
+## 1. Клонирование репозитория
+```bash
+12
+git clone https://github.com/kostIT13/AI-system-for-screening-candidates.git
+cd AI-system-for-screening-candidates
+```
+##2. Настройка окружения
+```bash
+# Скопируйте шаблон переменных
+cp .env.example .env
+
+# Отредактируйте .env при необходимости:
+# POSTGRES_USER, POSTGRES_PASSWORD, OLLAMA_BASE_URL и т.д.
+```
+## 3. Запуск через Docker Compose
+```bash
+# Запуск всех сервисов (БД, бэкенд, Ollama)
+docker compose up -d
+
+# Проверка логов
+docker compose logs -f api
+
+# Загрузка модели Llama 3.2 (если не загружена)
+docker compose exec ollama ollama pull llama3.2:3b
+```
+## 4. Инициализация базы данных
+```bash
+# Применение миграций
+docker compose exec api alembic upgrade head
+
+# (Опционально) Заполнение тестовыми данными
+docker compose exec api python -m src.db.seed
 ```
 
 
