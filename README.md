@@ -42,5 +42,75 @@
 * ⚖️ Fairness: контроль предвзятости по демографическим признакам
 * 📊 Визуализация воронки отбора
 
+## 🏗️ Архитектура проекта
+```
+📦 AI-system-for-screening-candidates
+├── 📁 src/
+│   ├── 📁 api/                 # API endpoints (FastAPI routers)
+│   │   ├── endpoints/
+│   │   │   ├── candidates/
+│   │   │   │   ├── endpoints.py
+│   │   │   │   ├── dependencies.py
+│   │   │   │   └── schemas.py
+│   │   │   ├── vacancies/
+│   │   │   │   │    ├── endpoint.py
+│   │   │   │   │    ├── dependencies.py
+│   │   │   │   │    └── schemas.py
+│   │   │   └── scoring/
+│   │   │   │   │    ├── endpoints.py
+│   │   │   │   │    ├── dependencies.py
+│   │   │   │   │    └── schemas.py 
+│   ├── 📁 chainlit_app/
+│   │   ├── app.py
+│   │   └── api_client.py 
+│   ├── 📁 core/                
+│   │   ├── config.py           
+│   │   ├── database.py
+│   │   ├── logging_settings.py         
+│   │   └── settings_llm.py      
+│   ├── 📁 models/              
+│   │   ├── candidate.py
+│   │   ├── vacancy.py
+│   │   └── scoring.py             
+│   ├── 📁 services/            
+│   │   ├── ai/
+│   │   │   ├── prompts/
+│   │   │   │   ├── function_for_prompts.py
+│   │   │   │   └── prompt.py
+│   │   │   ├── llm_client.py
+│   │   │   └── scoring_engine.py
+│   │   ├── candidates/
+│   │   │   ├── base.py
+│   │   │   ├── candidate_service.py
+│   │   │   ├── parser.py
+│   │   │   └── repository.py
+│   │   ├── scoring/
+│   │   │   ├── base.py
+│   │   │   ├── scoring.py
+│   │   │   └── repository.py
+│   │   └── vacancies/
+│   │   │   ├── base.py
+│   │   │   ├── vacancy_service.py
+│   │   │   ├── parser.py
+│   │   │   └── repository.py                         
+├── 📁 tests/                   # Тесты
+│   ├── 📁 fixtures/            # Тестовые данные
+│   ├── 📁 unit/                # Unit-тесты
+│   └── 📁 integration/
+└── main.py        
+├── 📁 alembic/
+├── 📄.env.test.example           
+├── 📄 docker-compose.yml       
+├── 📄 Dockerfile
+├── 📄 requirements.txt
+├── 📄 pytest.ini
+├── 📄 alembic.ini
+├── 📄 .dockerignore
+├── 📄 .gitignore
+├── 📄 uv.lock           
+├── 📄 pyproject.toml           
+├── 📄 .env.example             
+└── 📄 README.md                
+```
 
 
