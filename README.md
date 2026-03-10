@@ -152,7 +152,6 @@
 * Минимум 8 ГБ ОЗУ для запуска Llama 3.2:3b
 ## 1. Клонирование репозитория
 ```bash
-12
 git clone https://github.com/kostIT13/AI-system-for-screening-candidates.git
 cd AI-system-for-screening-candidates
 ```
