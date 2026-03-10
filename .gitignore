@@ -29,4 +29,7 @@ temp/
 data/*.csv
 alembic/versions/__pycache__/
 
-.chainlit
+.chainlit/
+chainlit.md
+.chainlit_cache/
+*.chainlit
