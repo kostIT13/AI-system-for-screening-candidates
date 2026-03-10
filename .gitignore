@@ -20,8 +20,6 @@ temp/
 *.pyd
 .Python
 
-.git/
-.gitignore
 .env
 .env.test
 *.log
