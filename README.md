@@ -126,7 +126,7 @@
 │   │   │   ├── parser.py
 │   │   │   └── repository.py                         
 ├── 📁 tests/                   # Тесты
-│   ├── 📁 fixtures/            # Тестовые данные
+│   ├── conftest.py          # Тестовые данные
 │   ├── 📁 unit/                # Unit-тесты
 │   └── 📁 integration/
 └── main.py        
