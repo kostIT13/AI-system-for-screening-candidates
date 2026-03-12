@@ -181,97 +181,34 @@ docker compose exec api alembic upgrade head
 docker compose exec api python -m src.db.seed
 ```
 
-```
-architecture-beta
-    %% ─────────────────────────────────────────────────────
-    %% Группы (слои архитектуры)
-    %% ─────────────────────────────────────────────────────
-    group client(cloud)[🖥️ Client Layer]
-    group api(cloud)[⚙️ API Layer - FastAPI]
-    group services(cloud)[🔧 Service Layer]
-    group data(cloud)[💾 Data Layer]
-    group infra(cloud)[🐳 Infrastructure]
+<img width="3606" height="8192" alt="Cloud-Based API Ecosystem-2026-03-12-170358" src="https://github.com/user-attachments/assets/dfe41216-d55f-46c7-9150-daefb1a228e8" />
 
-    %% ─────────────────────────────────────────────────────
-    %% Клиентский слой
-    %% ─────────────────────────────────────────────────────
-    service chainlit(internet)[Chainlit UI] in client
-    service swagger(internet)[Swagger UI] in client
 
-    %% ─────────────────────────────────────────────────────
-    %% API Layer
-    %% ─────────────────────────────────────────────────────
-    service candidates_api(server)[/candidates] in api
-    service vacancies_api(server)[/vacancies] in api
-    service scoring_api(server)[/scoring] in api
 
-    %% ─────────────────────────────────────────────────────
-    %% Сервисный слой - AI Services
-    %% ─────────────────────────────────────────────────────
-    service llm_client(server)[llm_client.py\nOllama + Llama 3.2] in services
-    service prompts(server)[prompts/\nfunction_for_prompts.py] in services
-    service scoring_engine(server)[scoring_engine.py] in services
 
-    %% ─────────────────────────────────────────────────────
-    %% Сервисный слой - Candidate & Vacancy
-    %% ─────────────────────────────────────────────────────
-    service cand_parser(server)[candidate/parser.py] in services
-    service cand_repo(server)[candidate/repository.py] in services
-    service vac_parser(server)[vacancy/parser.py] in services
-    service vac_repo(server)[vacancy/repository.py] in services
 
-    %% ─────────────────────────────────────────────────────
-    %% Слой данных
-    %% ─────────────────────────────────────────────────────
-    service postgres(database)[PostgreSQL 15+] in data
-    service alembic(disk)[Alembic Migrations] in data
 
-    %% ─────────────────────────────────────────────────────
-    %% Инфраструктура
-    %% ─────────────────────────────────────────────────────
-    service docker(server)[docker-compose.yml] in infra
-    service env(disk)[.env config] in infra
 
-    %% ─────────────────────────────────────────────────────
-    %% Связи: Клиент → API
-    %% ─────────────────────────────────────────────────────
-    chainlit:R --> L:candidates_api
-    chainlit:R --> L:vacancies_api
-    chainlit:R --> L:scoring_api
-    swagger:R --> L:candidates_api
-    swagger:R --> L:vacancies_api
-    swagger:R --> L:scoring_api
 
-    %% ─────────────────────────────────────────────────────
-    %% Связи: API → Сервисы
-    %% ─────────────────────────────────────────────────────
-    candidates_api:B --> T:cand_parser
-    cand_parser:B --> T:cand_repo
-    vacancies_api:B --> T:vac_parser
-    vac_parser:B --> T:vac_repo
-    scoring_api:B --> T:scoring_engine
 
-    %% ─────────────────────────────────────────────────────
-    %% Связи: AI-логика
-    %% ─────────────────────────────────────────────────────
-    scoring_engine:R --> L:llm_client
-    scoring_engine:R --> L:prompts
 
-    %% ─────────────────────────────────────────────────────
-    %% Связи: Сервисы → Данные
-    %% ─────────────────────────────────────────────────────
-    cand_repo:R --> L:postgres
-    vac_repo:R --> L:postgres
-    scoring_engine:R --> L:postgres
-    alembic:B --> T:postgres
 
-    %% ─────────────────────────────────────────────────────
-    %% Связи: Инфраструктура (пунктирные)
-    %% ─────────────────────────────────────────────────────
-    env:B -- T:docker
-    docker:B -- T:candidates_api
-    docker:B -- T:vacancies_api
-    docker:B -- T:scoring_api
-    docker:B -- T:postgres
-    docker:B -- T:llm_client
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
