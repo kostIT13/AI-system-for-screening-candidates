@@ -181,6 +181,10 @@ docker compose exec api alembic upgrade head
 docker compose exec api python -m src.db.seed
 ```
 
+
+## Общая архитектура
+
+
 <img width="3606" height="8192" alt="Cloud-Based API Ecosystem-2026-03-12-170358" src="https://github.com/user-attachments/assets/dfe41216-d55f-46c7-9150-daefb1a228e8" />
 
 
