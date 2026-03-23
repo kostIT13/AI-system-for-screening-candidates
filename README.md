@@ -14,7 +14,7 @@
 
 ## ✨ Возможности
 ## 🤖 AI-скоринг кандидатов
-# Пример результата оценки
+**Пример результата оценки** 
 ```
 {
   "overall_match": 85,           # Общая оценка соответствия
@@ -52,7 +52,6 @@
 * Ollama — локальный запуск больших языковых моделей
 * Llama 3.2:3b — основная модель для анализа и скоринга
 * LangChain + langchain-community — оркестрация промптов и цепочек
-* spaCy / nltk (опционально) — предобработка текста
 
 **Фронтенд и интерфейс**
 * Chainlit — интерактивный чат-интерфейс для работы с ИИ
@@ -72,7 +71,6 @@
 * httpx — асинхронный клиент для тестов API
 * factory-boy — фабрики тестовых данных
 * pytest-cov — отчёт о покрытии кода
-* ruff / mypy — линтинг и проверка типов
 
 ## 🏗️ Архитектура проекта
 ```
@@ -155,7 +153,7 @@
 git clone https://github.com/kostIT13/AI-system-for-screening-candidates.git
 cd AI-system-for-screening-candidates
 ```
-##2. Настройка окружения
+## 2. Настройка окружения
 ```bash
 # Скопируйте шаблон переменных
 cp .env.example .env
@@ -182,5 +180,92 @@ docker compose exec api alembic upgrade head
 # (Опционально) Заполнение тестовыми данными
 docker compose exec api python -m src.db.seed
 ```
+
+
+# Общая архитектура
+
+
+<img width="3606" height="8192" alt="Cloud-Based API Ecosystem-2026-03-12-170358" src="https://github.com/user-attachments/assets/dfe41216-d55f-46c7-9150-daefb1a228e8" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
