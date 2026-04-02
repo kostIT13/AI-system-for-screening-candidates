@@ -4,13 +4,10 @@ from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
-API_BASE_URL = "http://backend:8000/api/v1"  # Внутри Docker
-# API_BASE_URL = "http://localhost:8000/api/v1"  # Для локальной разработки
+API_BASE_URL = "http://backend:8000/api/v1" 
 
 
 class APIClient:
-    """HTTP-клиент для взаимодействия с FastAPI API"""
-    
     def __init__(self, base_url: str = API_BASE_URL, timeout: float = 120.0):
         self.base_url = base_url.rstrip('/')
         self.timeout = timeout
@@ -27,7 +24,6 @@ class APIClient:
         location: Optional[str] = None,
         limit: int = 10
     ) -> List[Dict]:
-        """GET /candidates?category=...&location=...&limit=..."""
         params = {'limit': limit}
         if category:
             params['category'] = category
@@ -39,7 +35,6 @@ class APIClient:
         return response.json()
     
     async def get_candidate(self, candidate_id: str) -> Optional[Dict]:
-        """GET /candidates/{id}"""
         try:
             response = await self.client.get(f"{self.base_url}/candidates/{candidate_id}")
             response.raise_for_status()
@@ -50,7 +45,6 @@ class APIClient:
             raise
     
     async def upload_candidates_csv(self, file_content: bytes, filename: str = "candidates.csv") -> Dict:
-        """POST /candidates/upload-csv"""
         files = {'file': (filename, file_content, 'text/csv')}
         response = await self.client.post(f"{self.base_url}/candidates/upload-csv", files=files)
         response.raise_for_status()
@@ -64,7 +58,6 @@ class APIClient:
         status: Optional[str] = 'active',
         limit: int = 10
     ) -> List[Dict]:
-        """GET /vacancies?category=...&location=...&status=...&limit=..."""
         params = {'limit': limit, 'status': status}
         if category:
             params['category'] = category
@@ -76,7 +69,6 @@ class APIClient:
         return response.json()
     
     async def get_vacancy(self, vacancy_id: str) -> Optional[Dict]:
-        """GET /vacancies/{id}"""
         try:
             response = await self.client.get(f"{self.base_url}/vacancies/{vacancy_id}")
             response.raise_for_status()
@@ -88,14 +80,12 @@ class APIClient:
     
     
     async def calculate_match(self, candidate_id: str, vacancy_id: str) -> Dict:
-        """POST /scoring/ {candidate_id, vacancy_id}"""
         payload = {'candidate_id': candidate_id, 'vacancy_id': vacancy_id}
         response = await self.client.post(f"{self.base_url}/scoring/", json=payload)
         response.raise_for_status()
         return response.json()
     
     async def get_best_matches_for_candidate(self, candidate_id: str, limit: int = 5) -> List[Dict]:
-        """GET /scoring/candidate/{id}/best?limit=..."""
         response = await self.client.get(
             f"{self.base_url}/scoring/candidate/{candidate_id}/best",
             params={'limit': limit}
@@ -104,21 +94,18 @@ class APIClient:
         return response.json()
     
     async def export_scores_csv(self, **filters) -> bytes:
-        """GET /scoring/export/csv?... → возвращает CSV как bytes"""
         response = await self.client.get(f"{self.base_url}/scoring/export/csv", params=filters)
         response.raise_for_status()
         return response.content
     
 
     async def create_candidate(self, candidate_data: Dict) -> Dict:
-        """POST /candidates/ — создать кандидата"""
         response = await self.client.post(f"{self.base_url}/candidates/", json=candidate_data)
         response.raise_for_status()
         return response.json()
 
 
     async def create_vacancy(self, vacancy_data: Dict) -> Dict:
-        """POST /vacancies/ — создать вакансию"""
         response = await self.client.post(f"{self.base_url}/vacancies/", json=vacancy_data)
         response.raise_for_status()
         return response.json()
