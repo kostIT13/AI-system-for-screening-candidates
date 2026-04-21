@@ -2,7 +2,9 @@ import httpx
 import logging
 from typing import Optional, List, Dict, Any
 
+
 logger = logging.getLogger(__name__)
+
 
 API_BASE_URL = "http://backend:8000/api/v1" 
 
@@ -34,6 +36,7 @@ class APIClient:
         response.raise_for_status()
         return response.json()
     
+
     async def get_candidate(self, candidate_id: str) -> Optional[Dict]:
         try:
             response = await self.client.get(f"{self.base_url}/candidates/{candidate_id}")
@@ -44,6 +47,7 @@ class APIClient:
                 return None
             raise
     
+
     async def upload_candidates_csv(self, file_content: bytes, filename: str = "candidates.csv") -> Dict:
         files = {'file': (filename, file_content, 'text/csv')}
         response = await self.client.post(f"{self.base_url}/candidates/upload-csv", files=files)
@@ -68,6 +72,7 @@ class APIClient:
         response.raise_for_status()
         return response.json()
     
+
     async def get_vacancy(self, vacancy_id: str) -> Optional[Dict]:
         try:
             response = await self.client.get(f"{self.base_url}/vacancies/{vacancy_id}")
@@ -85,6 +90,7 @@ class APIClient:
         response.raise_for_status()
         return response.json()
     
+
     async def get_best_matches_for_candidate(self, candidate_id: str, limit: int = 5) -> List[Dict]:
         response = await self.client.get(
             f"{self.base_url}/scoring/candidate/{candidate_id}/best",
@@ -93,6 +99,7 @@ class APIClient:
         response.raise_for_status()
         return response.json()
     
+
     async def export_scores_csv(self, **filters) -> bytes:
         response = await self.client.get(f"{self.base_url}/scoring/export/csv", params=filters)
         response.raise_for_status()
