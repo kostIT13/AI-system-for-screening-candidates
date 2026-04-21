@@ -76,7 +76,7 @@
 ```
 📦 AI-system-for-screening-candidates
 ├── 📁 src/
-│   ├── 📁 api/                 # API endpoints (FastAPI routers)
+│   ├── 📁 api/                 
 │   │   ├── endpoints/
 │   │   │   ├── candidates/
 │   │   │   │   ├── endpoints.py
@@ -123,9 +123,9 @@
 │   │   │   ├── vacancy_service.py
 │   │   │   ├── parser.py
 │   │   │   └── repository.py                         
-├── 📁 tests/                   # Тесты
-│   ├── conftest.py          # Тестовые данные
-│   ├── 📁 unit/                # Unit-тесты
+├── 📁 tests/                   
+│   ├── conftest.py          
+│   ├── 📁 unit/                
 │   └── 📁 integration/
 └── main.py        
 ├── 📁 alembic/
