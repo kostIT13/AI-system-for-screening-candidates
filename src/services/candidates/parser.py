@@ -7,14 +7,12 @@ from src.models.candidates import Candidates
 
 
 def parse_skills(skills_str: str) -> Optional[List[str]]:
-    """Парсит строку навыков в список"""
     if not skills_str or skills_str.strip() == '':
         return None
     return [skill.strip() for skill in skills_str.split(',') if skill.strip()]
 
 
 def parse_exp_years(exp_str: str) -> Optional[int]:
-    """Парсит опыт (берём минимум из диапазона '3-5' → 3)"""
     if not exp_str or str(exp_str).strip() == '':
         return None
     try:
@@ -29,7 +27,6 @@ def parse_exp_years(exp_str: str) -> Optional[int]:
 
 
 def parse_int(value) -> Optional[int]:
-    """Безопасный парсинг целых чисел"""
     if not value or str(value).strip() == '':
         return None
     try:
@@ -39,10 +36,6 @@ def parse_int(value) -> Optional[int]:
 
 
 async def parse_candidates_csv(file_content: bytes) -> List[dict]:
-    """
-    Парсит CSV и возвращает список словарей (без работы с БД).
-    Принимает bytes (как приходит из Chainlit/FastAPI UploadFile).
-    """
     candidates_data = []
     csv_content = file_content.decode('utf-8')
     reader = csv.DictReader(io.StringIO(csv_content))
@@ -61,7 +54,6 @@ async def parse_candidates_csv(file_content: bytes) -> List[dict]:
             'remote': row.get('Remote', '').strip(),
             'summary': (row.get('Summary', '') or '')[:500],
         }
-        # Добавляем только если есть категория
         if candidate_data['category']:
             candidates_data.append(candidate_data)
     
@@ -69,10 +61,6 @@ async def parse_candidates_csv(file_content: bytes) -> List[dict]:
 
 
 async def load_candidates_from_csv_async(db: AsyncSession, file_content: bytes) -> int:
-    """
-    Парсит CSV и сохраняет кандидатов в БД (асинхронная версия).
-    Возвращает количество загруженных записей.
-    """
     candidates_data = await parse_candidates_csv(file_content)
     
     count = 0

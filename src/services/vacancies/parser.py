@@ -8,14 +8,12 @@ from src.models.vacancies import Vacancies
 
 
 def parse_skills(skills_str: str) -> Optional[List[str]]:
-    """Парсит строку навыков в список"""
     if not skills_str or skills_str.strip() == '':
         return None
     return [skill.strip() for skill in skills_str.split(',') if skill.strip()]
 
 
 def parse_exp_years(exp_str: str) -> Tuple[Optional[int], Optional[int]]:
-    """Парсит опыт: '3-5' → (3, 5), '5+' → (5, None), '4' → (4, 4)"""
     if not exp_str or str(exp_str).strip() == '':
         return None, None
     
@@ -44,7 +42,6 @@ def parse_exp_years(exp_str: str) -> Tuple[Optional[int], Optional[int]]:
 
 
 def parse_int(value) -> Optional[int]:
-    """Безопасный парсинг целых чисел"""
     if not value or str(value).strip() == '':
         return None
     try:
@@ -54,9 +51,6 @@ def parse_int(value) -> Optional[int]:
 
 
 async def parse_vacancies_csv(file_content: bytes) -> List[dict]:
-    """
-    Парсит CSV и возвращает список словарей (без работы с БД).
-    """
     vacancies_data = []
     csv_content = file_content.decode('utf-8')
     reader = csv.DictReader(io.StringIO(csv_content))
@@ -77,7 +71,7 @@ async def parse_vacancies_csv(file_content: bytes) -> List[dict]:
             'employment': row.get('Employment', '').strip(),
             'remote': row.get('Remote', '').strip(),
             'summary': (row.get('Description', '') or row.get('Summary', ''))[:500],
-            'status': 'active'  # По умолчанию все вакансии активные
+            'status': 'active' 
         }
         if vacancy_data['category']:
             vacancies_data.append(vacancy_data)
@@ -86,9 +80,6 @@ async def parse_vacancies_csv(file_content: bytes) -> List[dict]:
 
 
 async def load_vacancies_from_csv_async(db: AsyncSession, file_content: bytes) -> int:
-    """
-    Парсит CSV и сохраняет вакансии в БД (асинхронная версия).
-    """
     vacancies_data = await parse_vacancies_csv(file_content)
     
     count = 0
