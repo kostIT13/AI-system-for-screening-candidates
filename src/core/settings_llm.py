@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class LLMSettings(BaseSettings):
-    OLLAMA_MODEL: str = Field(default="qwen3:4b", env="OLLAMA_MODEL")
+    OLLAMA_MODEL: str = Field(default="screening-test:3b", env="OLLAMA_MODEL")
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1", env="OLLAMA_BASE_URL")
     OLLAMA_API_KEY: Optional[str] = Field(default="ollama", env="OLLAMA_API_KEY")
     LLM_TEMPERATURE: float = Field(default=0.1, ge=0.0, le=2.0, env="LLM_TEMPERATURE")
