@@ -284,29 +284,33 @@ async def on_calc(action: cl.Action):
             vacancy_data['status'] = 'active'
             vacancy = await api_client.create_vacancy(vacancy_data)
             vacancy_id = vacancy['id']
+            persisted_vacancy = await api_client.get_vacancy(vacancy_id)
+            if not persisted_vacancy:
+                raise ValueError("Vacancy was not persisted in DB")
+            vacancy = persisted_vacancy
         else:
             vacancy_filters = parse_vacancy_text(vacancy_text)
-            vacancies = await api_client.get_vacancies(
-                category=vacancy_filters.get('category'),
-                location=vacancy_filters.get('location'),
-                status='active',
-                limit=5
-            )
-            
-            if not vacancies:
-                vacancy_data = {
-                    'id': f"temp_vac_{uuid.uuid4()}",
-                    'category': vacancy_filters.get('category', 'Разработчик'),
-                    'title': vacancy_text[:50],
-                    'key_skills': vacancy_filters.get('skills', []),
-                    'location': vacancy_filters.get('location', 'Не указана'),
-                    'status': 'active'
-                }
-                vacancy = await api_client.create_vacancy(vacancy_data)
-                vacancy_id = vacancy['id']
-            else:
-                vacancy = vacancies[0]
-                vacancy_id = vacancy['id']
+            vacancy_data = {
+                'id': f"temp_vac_{uuid.uuid4()}",
+                'category': vacancy_filters.get('category', 'Разработчик'),
+                'title': vacancy_filters.get('title') or vacancy_text[:50],
+                'exp_years_min': vacancy_filters.get('exp_years_min'),
+                'exp_years_max': vacancy_filters.get('exp_years_max'),
+                'key_skills': vacancy_filters.get('skills', []),
+                'location': vacancy_filters.get('location', 'Не указана'),
+                'salary_min': vacancy_filters.get('salary_min'),
+                'salary_max': vacancy_filters.get('salary_max'),
+                'employment': vacancy_filters.get('employment'),
+                'remote': vacancy_filters.get('remote'),
+                'summary': vacancy_filters.get('summary') or vacancy_text[:500],
+                'status': 'active'
+            }
+            vacancy = await api_client.create_vacancy(vacancy_data)
+            vacancy_id = vacancy['id']
+            persisted_vacancy = await api_client.get_vacancy(vacancy_id)
+            if not persisted_vacancy:
+                raise ValueError("Vacancy was not persisted in DB")
+            vacancy = persisted_vacancy
         
         if scoring_mode == "batch":
             await cl.Message(content=f"Считаем скоринг для {len(candidate_ids)} кандидатов...").send()
@@ -364,8 +368,49 @@ async def read_file_content(file) -> Optional[str]:
 
 
 def parse_vacancy_text(text: str) -> Dict:
-    result = {'category': None, 'location': None, 'skills': []}
+    result = {
+        'category': None,
+        'title': None,
+        'location': None,
+        'skills': [],
+        'exp_years_min': None,
+        'exp_years_max': None,
+        'salary_min': None,
+        'salary_max': None,
+        'employment': None,
+        'remote': None,
+        'summary': None,
+    }
     text_lower = text.lower()
+
+    # If user pasted one CSV row, parse fields directly.
+    try:
+        row = next(csv.reader([text]))
+        if len(row) >= 10:
+            result['category'] = row[0].strip() or None
+            result['title'] = row[1].strip() or None
+
+            exp_raw = row[2].strip()
+            if '-' in exp_raw:
+                left, right = [p.strip() for p in exp_raw.split('-', 1)]
+                result['exp_years_min'] = int(left) if left.isdigit() else None
+                result['exp_years_max'] = int(right) if right.isdigit() else None
+            elif exp_raw.isdigit():
+                years = int(exp_raw)
+                result['exp_years_min'] = years
+                result['exp_years_max'] = years
+
+            result['skills'] = [s.strip() for s in row[3].split(',') if s.strip()]
+            result['location'] = row[4].strip() or None
+            result['salary_min'] = int(row[5].strip()) if row[5].strip().isdigit() else None
+            result['salary_max'] = int(row[6].strip()) if row[6].strip().isdigit() else None
+            result['employment'] = row[7].strip() or None
+            result['remote'] = row[8].strip() or None
+            result['summary'] = row[9].strip() or None
+            return result
+    except Exception:
+        # Fallback for free-form text mode.
+        pass
     
     locations = {'москва': 'Москва', 'спб': 'Санкт-Петербург', 'казань': 'Казань', 'регионы': 'Регионы'}
     for key, value in locations.items():
@@ -381,7 +426,9 @@ def parse_vacancy_text(text: str) -> Dict:
     words = text.split(',')
     if words:
         result['category'] = words[0].strip()
-    
+        result['title'] = words[0].strip()
+
+    result['summary'] = text[:500]
     return result
 
 

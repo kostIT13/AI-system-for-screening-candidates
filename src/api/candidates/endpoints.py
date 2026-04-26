@@ -3,8 +3,7 @@ from typing import List, Optional, Annotated
 from src.api.candidates.schemas import CandidateResponse, CandidateCreate, CandidateUpdate, CandidateStats
 from src.api.candidates.dependencies import CandidatesServiceDependency
 from src.services.candidates.candidate_service import CandidateService
-import csv 
-import io 
+from src.services.candidates.parser import parse_candidates_csv
 
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["Candidates"])
@@ -64,25 +63,12 @@ async def upload_candidates_csv(
     
     try:
         contents = await file.read()
-        csv_content = contents.decode('utf-8')
-        reader = csv.DictReader(io.StringIO(csv_content))
-        
+        parsed_candidates = await parse_candidates_csv(contents)
+
         count = 0
-        candidate_ids = [] 
-        
-        for row in reader:
-            candidate_data = {
-                'category': row.get('Category', ''),
-                'title': row.get('Title', row.get('Category', '')),
-                'exp_years': int(row['Exp_Years']) if row.get('Exp_Years') else None,
-                'key_skills': [s.strip() for s in row.get('Key_Skills', '').split(',') if s.strip()] if row.get('Key_Skills') else None,
-                'location': row.get('Location', 'Not specified'),
-                'salary_min': int(row['Salary_Min']) if row.get('Salary_Min') else None,
-                'salary_max': int(row['Salary_Max']) if row.get('Salary_Max') else None,
-                'employment': row.get('Employment', ''),
-                'remote': row.get('Remote', ''),
-                'summary': row.get('Summary', '')[:500] if row.get('Summary') else None
-            }
+        candidate_ids = []
+
+        for candidate_data in parsed_candidates:
             candidate = await service.create_candidate(candidate_data)
             candidate_ids.append(candidate.id)
             count += 1
@@ -92,9 +78,6 @@ async def upload_candidates_csv(
             "candidate_ids": candidate_ids 
         }
     
-    except ValueError as e:
-        # Обработка ошибок парсинга чисел
-        raise HTTPException(status_code=400, detail=f"Invalid CSV format: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading CSV: {str(e)}")
 

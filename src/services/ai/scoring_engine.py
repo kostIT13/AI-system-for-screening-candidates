@@ -63,10 +63,33 @@ class ScoringEngine:
                 prompt=prompt,
                 system_prompt=SYSTEM_PROMPT
             )
-            
-            match_score = float(response.get('match_score', 0))
-            confidence = float(response.get('confidence', 0.0))
-            analysis = response.get('analysis', {})
+
+            analysis = response.get('analysis', {}) or {}
+            parse_failed = str(analysis.get("error", "")).lower() == "json parse failed"
+
+            # Some local models return score/confidence inside analysis block.
+            raw_match_score = response.get('match_score', analysis.get('match_score', 0))
+            raw_confidence = response.get('confidence', analysis.get('confidence', 0.0))
+
+            try:
+                match_score = float(raw_match_score)
+            except (TypeError, ValueError):
+                match_score = 0.0
+            try:
+                confidence = float(raw_confidence)
+            except (TypeError, ValueError):
+                confidence = 0.0
+
+            # If model output can't be parsed as JSON, do deterministic fallback
+            # instead of storing constant 50/0.5 from the client-level default.
+            if parse_failed:
+                fallback_score, fallback_confidence = self._fallback_scoring(candidate, vacancy)
+                match_score = fallback_score
+                confidence = fallback_confidence
+                analysis["fallback"] = True
+                analysis["fallback_reason"] = "json_parse_failed"
+
+            analysis = self._normalize_analysis(analysis, candidate, vacancy)
             
             match_score = max(0, min(100, match_score))
             confidence = max(0.0, min(1.0, confidence))
@@ -82,11 +105,97 @@ class ScoringEngine:
         except Exception as e:
             logger.warning(f"LLM scoring failed, using fallback: {e}")
             match_score, confidence = self._fallback_scoring(candidate, vacancy)
-            return match_score, confidence, {
+            fallback_analysis = {
                 'error': str(e),
                 'fallback': True,
                 'skills_match': 'Расчёт через fallback-алгоритм'
             }
+            return match_score, confidence, self._normalize_analysis(fallback_analysis, candidate, vacancy)
+
+    @staticmethod
+    def _normalize_analysis(analysis: Dict, candidate: Candidates, vacancy: Vacancies) -> Dict:
+        """Guarantee factual consistency for experience/salary/location details."""
+        safe_analysis = dict(analysis or {})
+
+        candidate_skills = {str(s).strip() for s in (candidate.key_skills or []) if str(s).strip()}
+        vacancy_skills = {str(s).strip() for s in (vacancy.key_skills or []) if str(s).strip()}
+        overlap = sorted(candidate_skills & vacancy_skills, key=str.lower)
+        missing = sorted(vacancy_skills - candidate_skills, key=str.lower)
+        if not vacancy_skills:
+            skills_text = "В вакансии не указаны ключевые навыки."
+        else:
+            overlap_text = ", ".join(overlap) if overlap else "нет совпадений"
+            missing_text = ", ".join(missing) if missing else "нет"
+            skills_text = (
+                f"Совпавшие навыки ({len(overlap)}/{len(vacancy_skills)}): {overlap_text}. "
+                f"Недостающие навыки: {missing_text}."
+            )
+        safe_analysis["skills_match"] = skills_text
+
+        candidate_exp = candidate.exp_years
+        min_exp = vacancy.exp_years_min
+        max_exp = vacancy.exp_years_max
+
+        if candidate_exp is None or min_exp is None:
+            exp_text = "Недостаточно данных для проверки опыта."
+        elif candidate_exp < min_exp:
+            if max_exp is None:
+                exp_text = (
+                    f"Опыт кандидата {candidate_exp} лет ниже требования вакансии (от {min_exp} лет)."
+                )
+            else:
+                exp_text = (
+                    f"Опыт кандидата {candidate_exp} лет ниже диапазона вакансии ({min_exp}-{max_exp} лет)."
+                )
+        elif max_exp is None or candidate_exp <= max_exp:
+            if max_exp is None:
+                exp_text = (
+                    f"Опыт кандидата {candidate_exp} лет соответствует требованию вакансии (от {min_exp} лет)."
+                )
+            else:
+                exp_text = (
+                    f"Опыт кандидата {candidate_exp} лет находится в диапазоне вакансии ({min_exp}-{max_exp} лет)."
+                )
+        else:
+            exp_text = (
+                f"Опыт кандидата {candidate_exp} лет выше верхней границы ({max_exp} лет), "
+                "но это допустимо как overqualified-профиль."
+            )
+        safe_analysis["experience_match"] = exp_text
+
+        c_min, c_max = candidate.salary_min, candidate.salary_max
+        v_min, v_max = vacancy.salary_min, vacancy.salary_max
+        if v_min is None and v_max is None:
+            salary_text = "В вакансии не указана зарплатная вилка."
+        elif c_min is None and c_max is None:
+            salary_text = "У кандидата не указаны зарплатные ожидания."
+        else:
+            cand_from = c_min if c_min is not None else c_max
+            cand_to = c_max if c_max is not None else c_min
+            vac_from = v_min if v_min is not None else v_max
+            vac_to = v_max if v_max is not None else v_min
+            overlaps = cand_from is not None and cand_to is not None and vac_from is not None and vac_to is not None and not (cand_to < vac_from or cand_from > vac_to)
+            salary_text = (
+                f"Ожидания кандидата ({cand_from}-{cand_to} руб.) "
+                f"{'пересекаются' if overlaps else 'не пересекаются'} "
+                f"с вилкой вакансии ({vac_from}-{vac_to} руб.)."
+            )
+        safe_analysis["salary_match"] = salary_text
+
+        same_location = bool(candidate.location and vacancy.location and candidate.location == vacancy.location)
+        remote_candidate = str(candidate.remote or "").strip().lower() in {"да", "yes", "true", "1", "remote", "гибрид"}
+        remote_vacancy = str(vacancy.remote or "").strip().lower() in {"да", "yes", "true", "1", "remote", "гибрид"}
+        if same_location:
+            location_text = f"Локация совпадает: {candidate.location}."
+        elif remote_candidate or remote_vacancy:
+            location_text = "Локация отличается, но удалённый/гибридный формат допускает совместимость."
+        else:
+            location_text = f"Локация не совпадает ({candidate.location} vs {vacancy.location})."
+        safe_analysis["location_match"] = location_text
+
+        safe_analysis.setdefault("strengths", [])
+        safe_analysis.setdefault("weaknesses", [])
+        return safe_analysis
     
     
     @staticmethod

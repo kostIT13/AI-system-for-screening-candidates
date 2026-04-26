@@ -2,9 +2,8 @@ from fastapi import APIRouter, Query, status, HTTPException, UploadFile, File, D
 from src.api.vacancies.schemas import VacanciesResponse, VacanciesCreate, VacanciesUpdate, VacanciesStats, VacancyResponse
 from typing import List, Optional
 from src.api.vacancies.dependencies import VacancyServiceDependency
-import io
-import csv
 from src.services.vacancies.vacancies_service import VacancyService
+from src.services.vacancies.parser import parse_vacancies_csv
 
 
 
@@ -69,57 +68,10 @@ async def upload_vacancies_csv(
     
     try:
         contents = await file.read()
-        csv_content = contents.decode('utf-8')
-        reader = csv.DictReader(io.StringIO(csv_content))
-        
+        parsed_vacancies = await parse_vacancies_csv(contents)
+
         count = 0
-        for row in reader:
-            skills = row.get('Key_Skills', '')
-            skills_list = [s.strip() for s in skills.split(',')] if skills else None
-            exp_min, exp_max = None, None
-            if row.get('Exp_Years'):
-                exp_str = row['Exp_Years'].strip()
-                if '-' in exp_str:
-                    parts = exp_str.split('-')
-                    try:
-                        exp_min = int(parts[0].strip())
-                        exp_max = int(parts[1].strip()) if len(parts) > 1 and parts[1].strip() else None
-                    except ValueError:
-                        exp_min, exp_max = None, None
-                elif '+' in exp_str:
-                    try:
-                        exp_min = int(exp_str.replace('+', '').strip())
-                        exp_max = None  
-                    except ValueError:
-                        exp_min, exp_max = None, None
-                else:
-                    try:
-                        exp = int(exp_str)
-                        exp_min, exp_max = exp, exp
-                    except ValueError:
-                        exp_min, exp_max = None, None
-       
-            def safe_int(value):
-                try:
-                    return int(value) if value else None
-                except (ValueError, TypeError):
-                    return None
-            
-            vacancy_data = {
-                'category': row.get('Category', '').strip(),
-                'title': row.get('Title', '').strip() or row.get('Category', '').strip(),
-                'exp_years_min': exp_min,
-                'exp_years_max': exp_max, 
-                'key_skills': skills_list,
-                'location': row.get('Location', '').strip() or 'Not specified',
-                'salary_min': safe_int(row.get('Salary_Min', '')),
-                'salary_max': safe_int(row.get('Salary_Max', '')),
-                'employment': row.get('Employment', '').strip(),
-                'remote': row.get('Remote', '').strip(),
-                'summary': row.get('Description', '')[:500] if row.get('Description') else None,
-                'status': 'active'
-            }
-            
+        for vacancy_data in parsed_vacancies:
             await service.create_vacancy(vacancy_data)
             count += 1
         

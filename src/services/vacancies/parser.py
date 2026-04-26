@@ -45,14 +45,17 @@ def parse_int(value) -> Optional[int]:
     if not value or str(value).strip() == '':
         return None
     try:
-        return int(value)
+        normalized = re.sub(r"[^\d\-]", "", str(value))
+        if normalized in ("", "-"):
+            return None
+        return int(normalized)
     except (ValueError, TypeError):
         return None
 
 
 async def parse_vacancies_csv(file_content: bytes) -> List[dict]:
     vacancies_data = []
-    csv_content = file_content.decode('utf-8')
+    csv_content = file_content.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(csv_content))
     
     for row in reader:

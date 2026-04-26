@@ -6,7 +6,8 @@ from datetime import datetime
 class VacanciesBase(BaseModel):
     category: str = Field(..., description="Категория (должность)")
     title: Optional[str] = Field(None, description="Заголовок")
-    exp_years: Optional[int] = Field(None, description="Опыт работы (лет)")
+    exp_years_min: Optional[int] = Field(None, description="Минимальный опыт (лет)")
+    exp_years_max: Optional[int] = Field(None, description="Максимальный опыт (лет)")
     key_skills: Optional[List[str]] = Field(None, description="Ключевые навыки")
     location: Optional[str] = Field(None, description="Локация")
     salary_min: Optional[int] = Field(None, description="Минимальная ЗП")
@@ -23,7 +24,8 @@ class VacanciesCreate(VacanciesBase):
 
 class VacanciesUpdate(BaseModel):
     title: Optional[str] = None
-    exp_years: Optional[int] = None
+    exp_years_min: Optional[int] = None
+    exp_years_max: Optional[int] = None
     key_skills: Optional[List[str]] = None
     location: Optional[str] = None
     salary_min: Optional[int] = None
@@ -47,8 +49,8 @@ class VacancyResponse(BaseModel):
     location: str
     salary_min: Optional[int] = None
     salary_max: Optional[int] = None
-    employment: str
-    remote: str
+    employment: Optional[str] = None
+    remote: Optional[str] = None
     summary: Optional[str] = None
     status: str = 'active'
     

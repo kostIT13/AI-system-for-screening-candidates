@@ -1,6 +1,7 @@
 import csv
 import uuid
 import io
+import re
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.candidates import Candidates
@@ -18,10 +19,11 @@ def parse_exp_years(exp_str: str) -> Optional[int]:
     try:
         exp_str = str(exp_str).strip()
         if '-' in exp_str:
-            return int(exp_str.split('-')[0].strip())
+            raw_min = exp_str.split('-')[0].strip()
+            return parse_int(raw_min)
         elif '+' in exp_str:
-            return int(exp_str.replace('+', '').strip())
-        return int(exp_str)
+            return parse_int(exp_str.replace('+', '').strip())
+        return parse_int(exp_str)
     except (ValueError, TypeError):
         return None
 
@@ -30,14 +32,17 @@ def parse_int(value) -> Optional[int]:
     if not value or str(value).strip() == '':
         return None
     try:
-        return int(value)
+        normalized = re.sub(r"[^\d\-]", "", str(value))
+        if normalized in ("", "-"):
+            return None
+        return int(normalized)
     except (ValueError, TypeError):
         return None
 
 
 async def parse_candidates_csv(file_content: bytes) -> List[dict]:
     candidates_data = []
-    csv_content = file_content.decode('utf-8')
+    csv_content = file_content.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(csv_content))
     
     for row in reader:

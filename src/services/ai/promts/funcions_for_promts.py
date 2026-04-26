@@ -36,6 +36,9 @@ def format_experience_range(min_exp: Optional[int], max_exp: Optional[int]) -> s
 
 
 def create_matching_prompt(candidate: Dict, vacancy: Dict) -> str:
+    vacancy_summary = (vacancy.get('summary', 'N/A') if isinstance(vacancy, dict) else getattr(vacancy, 'summary', 'N/A')) or 'N/A'
+    candidate_summary = candidate.get('summary', 'N/A') or 'N/A'
+
     return f"""
 ## ВАКАНСИЯ:
 **Должность:** {vacancy.get('title', 'N/A')}
@@ -46,7 +49,7 @@ def create_matching_prompt(candidate: Dict, vacancy: Dict) -> str:
 **Зарплата:** {format_salary(vacancy.get('salary_min'), vacancy.get('salary_max'))}
 **Тип занятости:** {vacancy.get('employment', 'N/A')}
 **Удалённая работа:** {vacancy.get('remote', 'N/A')}
-**Описание:** **Описание:** {(vacancy.get('summary') if isinstance(vacancy, dict) else getattr(vacancy, 'summary', None)) or 'N/A'[:300]}
+**Описание:** {vacancy_summary[:300]}
 
 ## КАНДИДАТ:
 **Текущая должность:** {candidate.get('title', 'N/A')}
@@ -57,7 +60,7 @@ def create_matching_prompt(candidate: Dict, vacancy: Dict) -> str:
 **Ожидаемая ЗП:** {format_salary(candidate.get('salary_min'), candidate.get('salary_max'))}
 **Тип занятости:** {candidate.get('employment', 'N/A')}
 **Удалённая работа:** {candidate.get('remote', 'N/A')}
-**Резюме:** {candidate.get('summary', 'N/A')[:300]}
+**Резюме:** {candidate_summary[:300]}
 
 ## ЗАДАЧА:
 Оцени соответствие кандидата вакансии по критериям из системного промпта.
