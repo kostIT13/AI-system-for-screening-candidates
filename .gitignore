@@ -39,3 +39,5 @@ chainlit.md
 *.tar
 models/
 fine-tuning/outputs/
+
+.files
