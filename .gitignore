@@ -31,3 +31,11 @@ alembic/versions/__pycache__/
 chainlit.md
 .chainlit_cache/
 *.chainlit
+
+*.gguf
+*.safetensors
+*.bin
+*.zip
+*.tar
+models/
+fine-tuning/outputs/
