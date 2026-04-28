@@ -52,6 +52,8 @@
 * Ollama — локальный запуск больших языковых моделей
 * Llama 3.2:3b — основная модель для анализа и скоринга
 * LangChain + langchain-community — оркестрация промптов и цепочек
+* Fine-tuning с QLoRA (Unsloth) — дообучение модели под задачу скрининга
+* Hugging Face Transformers — работа с моделями и датасетами
 
 **Фронтенд и интерфейс**
 * Chainlit — интерактивный чат-интерфейс для работы с ИИ
@@ -72,11 +74,57 @@
 * factory-boy — фабрики тестовых данных
 * pytest-cov — отчёт о покрытии кода
 
+## 🎯 Fine-tuning моделей
+
+Проект включает возможность дообучения (fine-tuning) модели **Llama 3.2 3B** для специализированной задачи оценки соответствия кандидатов вакансиям. Fine-tuning позволяет повысить точность и адаптировать модель под конкретные требования рекрутинга.
+
+### 📁 Ноутбуки для fine-tuning
+
+| Ноутбук | Описание | Датасет | Время обучения |
+|---------|----------|---------|----------------|
+| [`FineTuning.ipynb`](./notebooks/FineTuning.ipynb) | Демо-версия для быстрого теста пайплайна | 9 примеров | ~2 минуты |
+| [`FineTuning_full_dataset.ipynb`](./notebooks/FineTuning_full_dataset.ipynb) | Полноценное обучение на полном датасете | 500 примеров | ~15 минут |
+
+### ⚙️ Параметры обучения
+
+| Параметр | Значение |
+|----------|----------|
+| Базовая модель | `unsloth/Llama-3.2-3B-Instruct` |
+| Метод | QLoRA 4-bit (Unsloth) |
+| GPU | Google Colab T4 (бесплатно) |
+| Batch size | 8 (2×4 gradient accumulation) |
+| Learning rate | 1e-4 – 2e-4 |
+| Max steps | Авто-расчёт под размер датасета |
+
+### 📊 Результаты
+
+- **Демо-версия (9 примеров)**: модель выучивает формат ответа (JSON), loss остаётся ~2.3
+- **Полное обучение (500 примеров)**: loss снижается с ~2.6 до **0.4–0.7**, модель учится оценивать соответствие
+
+### 🔗 Модели на Hugging Face
+
+* 🤗 [Репозиторий модели (9 примеров)](https://huggingface.co/jiikoool/screening-test/tree/main)
+* 🤗 [Репозиторий модели (500 примеров)](https://huggingface.co/jiikoool/screening-test3b/tree/main)
+
+### 🔧 Интеграция с Ollama
+
+Обученную модель можно конвертировать в формат GGUF и использовать в Ollama:
+
+```bash
+# Скачайте модель.gguf и Modelfile
+ollama create screening-test:3b -f Modelfile
+ollama run screening-test:3b
+```
+
+### 🚀 Использование в системе
+
+После fine-tuning модель может быть использована в системе вместо стандартной Llama 3.2, что повысит точность скрининга и качество генерации оценок.
+
 ## 🏗️ Архитектура проекта
 ```
 📦 AI-system-for-screening-candidates
 ├── 📁 src/
-│   ├── 📁 api/                 
+│   ├── 📁 api/
 │   │   ├── endpoints/
 │   │   │   ├── candidates/
 │   │   │   │   ├── endpoints.py
@@ -89,20 +137,20 @@
 │   │   │   └── scoring/
 │   │   │   │   │    ├── endpoints.py
 │   │   │   │   │    ├── dependencies.py
-│   │   │   │   │    └── schemas.py 
+│   │   │   │   │    └── schemas.py
 │   ├── 📁 chainlit_app/
 │   │   ├── app.py
-│   │   └── api_client.py 
-│   ├── 📁 core/                
-│   │   ├── config.py           
+│   │   └── api_client.py
+│   ├── 📁 core/
+│   │   ├── config.py
 │   │   ├── database.py
-│   │   ├── logging_settings.py         
-│   │   └── settings_llm.py      
-│   ├── 📁 models/              
+│   │   ├── logging_settings.py
+│   │   └── settings_llm.py
+│   ├── 📁 models/
 │   │   ├── candidate.py
 │   │   ├── vacancy.py
-│   │   └── scoring.py             
-│   ├── 📁 services/            
+│   │   └── scoring.py
+│   ├── 📁 services/
 │   │   ├── ai/
 │   │   │   ├── prompts/
 │   │   │   │   ├── function_for_prompts.py
@@ -122,25 +170,25 @@
 │   │   │   ├── base.py
 │   │   │   ├── vacancy_service.py
 │   │   │   ├── parser.py
-│   │   │   └── repository.py                         
-├── 📁 tests/                   
-│   ├── conftest.py          
-│   ├── 📁 unit/                
+│   │   │   └── repository.py
+├── 📁 tests/
+│   ├── conftest.py
+│   ├── 📁 unit/
 │   └── 📁 integration/
-└── main.py        
+└── main.py
 ├── 📁 alembic/
-├── 📄.env.test.example           
-├── 📄 docker-compose.yml       
+├── 📄.env.test.example
+├── 📄 docker-compose.yml
 ├── 📄 Dockerfile
 ├── 📄 requirements.txt
 ├── 📄 pytest.ini
 ├── 📄 alembic.ini
 ├── 📄 .dockerignore
 ├── 📄 .gitignore
-├── 📄 uv.lock           
-├── 📄 pyproject.toml           
-├── 📄 .env.example             
-└── 📄 README.md                
+├── 📄 uv.lock
+├── 📄 pyproject.toml
+├── 📄 .env.example
+└── 📄 README.md
 ```
 
 ## 🚀 Быстрый старт
