@@ -22,8 +22,7 @@
 - `example_04.json`
 - `example_05.json`
 
-Также добавлен генератор полного датасета:
-- `generate_full_dataset.py`
+
 
 Сгенерированные файлы:
 - `train_full.jsonl` (540 примеров)
