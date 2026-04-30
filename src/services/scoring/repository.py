@@ -27,6 +27,11 @@ class SQLAlchemyScoringRepository(ScoringRepository):
         result = await self.session.execute(query)
         return list(result.scalars().all())
     
+    async def get_by_vacancy_id(self, vacancy_id: str) -> List[Scoring]:
+        query = select(Scoring).where(Scoring.vacancy_id==vacancy_id)
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+    
     async def create(self, data: Scoring) -> Optional[Scoring]:
         self.session.add(data)
         await self.session.commit()
