@@ -1,7 +1,7 @@
 from typing import Dict, Tuple, Optional
 from src.services.ai.llm_client import LLMClient
-from src.services.ai.promts.promt import SYSTEM_PROMPT
-from src.services.ai.promts.funcions_for_promts import create_matching_prompt
+from src.services.ai.prompts.promt import SYSTEM_PROMPT
+from src.services.ai.prompts.funcions_for_promts import create_matching_prompt
 from src.models.candidates import Candidates
 from src.models.vacancies import Vacancies
 import logging
