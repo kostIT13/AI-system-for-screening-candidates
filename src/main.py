@@ -12,7 +12,9 @@ from sqlalchemy import text
 
 setup_logging(level=os.getenv("LOG_LEVEL", "INFO"))
 
+
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,7 +33,9 @@ async def lifespan(app: FastAPI):
     await engine.dispose() 
     logger.info("Готово")
 
+
 app = FastAPI(title="AI Candidate Screening", lifespan=lifespan)
+
 
 app.include_router(router=candidates_router)
 app.include_router(router=vacancies_router)
