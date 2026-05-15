@@ -36,20 +36,30 @@ services:
       - app_network
     restart: unless-stopped    
 
-  chainlit:
+  streamlit:
     build: .
-    container_name: myapp_chainlit
+    container_name: myapp_streamlit
     working_dir: /app
-    command: chainlit run src/chainlit_app/app.py --host 0.0.0.0 --port 8500
+    command: >
+      streamlit run src/streamlit_app/app.py
+      --server.address 0.0.0.0
+      --server.port 8501
+      --server.enableCORS false
+      --server.enableXsrfProtection false
+      --browser.gatherUsageStats false
     ports:
-      - "8500:8500"
+      - "8501:8501"  
     volumes:
       - .:/app
-      - ./.chainlit:/app/.chainlit
+      - streamlit_cache:/app/.streamlit
     environment:
       - PYTHONPATH=/app
-      - DATABASE_URL=
-      - API_BASE_URL=http://backend:8000/api/v1
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - API_BASE_URL=http://backend:8000/api/v1 
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ENABLERELOAD=false 
+    env_file:
+      - .env
     depends_on:
       - backend
     networks:
@@ -82,7 +92,4 @@ networks:
 
 volumes:
   postgres_data:
-
-
-
-  
+  streamlit_cache:  
