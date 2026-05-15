@@ -1,3 +1,4 @@
+# src/services/candidates/parser.py
 import csv
 import uuid
 import io
@@ -40,7 +41,8 @@ def parse_int(value) -> Optional[int]:
         return None
 
 
-async def parse_candidates_csv(file_content: bytes) -> List[dict]:
+# ✅ ИЗМЕНЕНО: async def -> def
+def parse_candidates_csv(file_content: bytes) -> List[dict]:
     candidates_data = []
     csv_content = file_content.decode('utf-8-sig')
     reader = csv.DictReader(io.StringIO(csv_content))
@@ -66,7 +68,8 @@ async def parse_candidates_csv(file_content: bytes) -> List[dict]:
 
 
 async def load_candidates_from_csv_async(db: AsyncSession, file_content: bytes) -> int:
-    candidates_data = await parse_candidates_csv(file_content)
+    # ✅ Убран await, так как парсер теперь синхронный
+    candidates_data = parse_candidates_csv(file_content)
     
     count = 0
     for data in candidates_data:
