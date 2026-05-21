@@ -7,7 +7,7 @@
 | Файл | Описание | Датасет | Время |
 |------|----------|---------|-------|
 | `FineTuning.ipynb` | Демо-версия для быстрого теста | 9 примеров | ~2 мин |
-| `FineTuning_full_dataset.ipynb` | Полноценное обучение | 500 примеров | ~15 мин |
+| `FineTuning_full_dataset.ipynb` | Полноценное обучение | 1200 примеров | ~35 мин |
 | `dataset_example.json` | Пример формата данных | — | — |
 
 ## 🚀 Быстрый старт
@@ -20,7 +20,7 @@
 - Loss: ~2.3 → 2.3 (не изменится значительно)
 - **Не для продакшена** — только для проверки пайплайна
 
-### 2. Полное обучение (500 примеров)
+### 2. Полное обучение (1200 примеров)
 Откройте [`FineTuning_full_dataset.ipynb`](./FineTuning_full_dataset.ipynb) в Google Colab.
 
 **Результат:**
@@ -42,7 +42,7 @@
 ## Ссылки на модели
 
 * 🤗 [Репозиторий модели на Hugging Face](https://huggingface.co/jiikoool/screening-test/tree/main) (9 examples)
-* 🤗 [Репозиторий модели на Hugging Face](https://huggingface.co/jiikoool/screening-test3b/tree/main) (500 examples)
+* 🤗 [Репозиторий модели на Hugging Face](https://huggingface.co/jiikoool/screening-test3b/tree/main) (1200 examples)
 
 
 ## 🔧 Использование в Ollama
